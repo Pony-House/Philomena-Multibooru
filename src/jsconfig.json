@@ -1,10 +1,14 @@
 {
-  "compilerOptions": {
-    "module": "NodeNext",
-    "target": "ESNext",
-    "lib": ["ESNext", "DOM"],
-    "moduleResolution": "nodenext",
-    "jsx": "react-jsx",
-    "checkJs": true
-  }
+    "compilerOptions": {
+        "allowSyntheticDefaultImports": true,
+        "removeComments": true,
+        "strict": false,
+        "strictNullChecks": true,
+        "module": "NodeNext",
+        "target": "ESNext",
+        "lib": ["ESNext", "DOM"],
+        "moduleResolution": "NodeNext",
+        "jsx": "react-jsx",
+        "checkJs": true
+    }
 }
