@@ -11,17 +11,17 @@ import { useState, useEffect } from 'react';
  */
 
 export const RecommendationsSettings = () => {
-  /** @type {[boolean, Dispatch<SetStateAction<boolean>>]} */
+  /** @type {ReactSetStateAction<boolean>} */
   const [enableRecs, setEnableRecs] = useState(() => {
     return localStorage.getItem('app_enableRecs') === 'true';
   });
 
-  /** @type {[number, Dispatch<SetStateAction<number>>]} */
+  /** @type {ReactSetStateAction<number>} */
   const [recTagLimit, setRecTagLimit] = useState(() => {
     return parseInt(localStorage.getItem('app_recTagLimit') || '5', 10);
   });
 
-  /** @type {[number, Dispatch<SetStateAction<number>>]} */
+  /** @type {ReactSetStateAction<number>} */
   const [recDaysLimit, setRecDaysLimit] = useState(() => {
     const saved = localStorage.getItem('app_recDaysLimit');
     return saved ? parseInt(saved, 10) : 3;

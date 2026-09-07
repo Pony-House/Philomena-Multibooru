@@ -38,7 +38,7 @@ export const AppSettings = ({
   setMaxItemsLimit,
   isLoading,
 }) => {
-  /** @type {[boolean, Dispatch<SetStateAction<boolean>>]} */
+  /** @type {ReactSetStateAction<boolean>} */
   const [autoRefreshEnabled, setAutoRefreshEnabled] = useState(
     localStorage.getItem('app_autoRefreshEnabled') === 'true',
   );
@@ -56,7 +56,7 @@ export const AppSettings = ({
     localStorage.getItem('app_plyrAutoplay') !== 'false',
   );
 
-  /** @type {[boolean, Dispatch<SetStateAction<boolean>>]} */
+  /** @type {ReactSetStateAction<boolean>} */
   const [recVideoMode, setRecVideoMode] = useState(() => {
     return localStorage.getItem('app_recVideoMode') === 'true';
   });
@@ -70,13 +70,13 @@ export const AppSettings = ({
     localStorage.getItem('app_plyrStorage') === 'true',
   );
 
-  /** @type {[boolean, Dispatch<SetStateAction<boolean>>]} */
+  /** @type {ReactSetStateAction<boolean>} */
   const [localFavesEnabled, setLocalFavesEnabled] = useState(false);
 
   /** @type {Ref<HTMLInputElement | null>} */
   const fileInputRef = useRef(null);
 
-  /** @type {[boolean, Dispatch<SetStateAction<boolean>>]} */
+  /** @type {ReactSetStateAction<boolean>} */
   const [isProcessingFaves, setIsProcessingFaves] = useState(false);
 
   useEffect(() => {

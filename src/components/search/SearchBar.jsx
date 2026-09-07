@@ -15,10 +15,10 @@ import { alert } from 'tiny-essentials/webTemplates/bootstrap/5.3/html/Bootstrap
  * @param {{ onSearchSubmit: (query: string, mode: string) => void, initialQuery: string, initialMode: string, isLoading: boolean }} props
  */
 export const SearchBar = ({ onSearchSubmit, initialQuery, initialMode, isLoading }) => {
-  /** @type {[string, Dispatch<SetStateAction<string>>]} */
+  /** @type {ReactSetStateAction<string>} */
   const [inputValue, setInputValue] = useState(initialQuery);
 
-  /** @type {[string, Dispatch<SetStateAction<string>>]} */
+  /** @type {ReactSetStateAction<string>} */
   const [mode, setMode] = useState(initialMode || 'api');
 
   const localFavesEnabled = localStorage.getItem('app_localFavesEnabled') === 'true';

@@ -33,22 +33,22 @@ export const Accounts = ({
   setIsLoading,
   loadAccounts,
 }) => {
-  /** @type {[Account[], Dispatch<SetStateAction<Account[]>>]} */
+  /** @type {ReactSetStateAction<Account[]>} */
   const [accountsList, setAccountsList] = useState([]);
 
-  /** @type {[string, Dispatch<SetStateAction<string>>]} */
+  /** @type {ReactSetStateAction<string>} */
   const [urlInput, setUrlInput] = useState('');
 
-  /** @type {[string, Dispatch<SetStateAction<string>>]} */
+  /** @type {ReactSetStateAction<string>} */
   const [keyInput, setKeyInput] = useState('');
 
-  /** @type {[boolean, Dispatch<SetStateAction<boolean>>]} */
+  /** @type {ReactSetStateAction<boolean>} */
   const [acceptRisk, setAcceptRisk] = useState(false);
 
-  /** @type {[string, Dispatch<SetStateAction<string>>]} */
+  /** @type {ReactSetStateAction<string>} */
   const [errorMessage, setErrorMessage] = useState('');
 
-  /** @type {[boolean, Dispatch<SetStateAction<boolean>>]} */
+  /** @type {ReactSetStateAction<boolean>} */
   const [warnRisk, setWarnRisk] = useState(false);
 
   /** @type {string} */

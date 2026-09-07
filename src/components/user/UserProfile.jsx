@@ -63,22 +63,22 @@ export const UserProfile = ({
   onOpenProfile,
   handleQuickLinkClick,
 }) => {
-  /** @type {[UserProfileData|null, Dispatch<SetStateAction<UserProfileData|null>>]} */
+  /** @type {ReactSetStateAction<UserProfileData|null>} */
   const [pf, setProfile] = useState(null);
 
-  /** @type {[boolean, Dispatch<SetStateAction<boolean>>]} */
+  /** @type {ReactSetStateAction<boolean>} */
   const [isLoading, setIsLoading] = useState(true);
 
-  /** @type {[ImageResult[], Dispatch<SetStateAction<ImageResult[]>>]} */
+  /** @type {ReactSetStateAction<ImageResult[]>} */
   const [recentUploads, setRecentUploads] = useState([]);
 
-  /** @type {[ImageResult[], Dispatch<SetStateAction<ImageResult[]>>]} */
+  /** @type {ReactSetStateAction<ImageResult[]>} */
   const [recentFaves, setRecentFaves] = useState([]);
 
-  /** @type {[CommentData[], Dispatch<SetStateAction<CommentData[]>>]} */
+  /** @type {ReactSetStateAction<CommentData[]>} */
   const [recentComments, setRecentComments] = useState([]);
 
-  /** @type {[number, Dispatch<SetStateAction<number>>]} */
+  /** @type {ReactSetStateAction<number>} */
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   /** @type {Ref<{ url: string|null, id: number|null, trigger: number|null, isMounted: boolean|null }>} */

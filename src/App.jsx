@@ -71,96 +71,96 @@ const scrollUp = () => window.scrollTo({ top: 0, behavior: 'smooth' });
  */
 
 const App = () => {
-  /** @type {[boolean, Dispatch<SetStateAction<boolean>>]} */
+  /** @type {ReactSetStateAction<boolean>} */
   const [isReady, setIsReady] = useState(false);
-  /** @type {[number, Dispatch<SetStateAction<number>>]} */
+  /** @type {ReactSetStateAction<number>} */
   const [totalItems, setTotalItems] = useState(0);
 
-  /** @type {[ImageResult[], Dispatch<SetStateAction<ImageResult[]>>]} */
+  /** @type {ReactSetStateAction<ImageResult[]>} */
   const [currentImages, setCurrentImages] = useState([]);
 
-  /** @type {[ImageResult[], Dispatch<SetStateAction<ImageResult[]>>]} */
+  /** @type {ReactSetStateAction<ImageResult[]>} */
   const [trendingImages, setTrendingImages] = useState([]);
 
-  /** @type {[ImageResult[], Dispatch<SetStateAction<ImageResult[]>>]} */
+  /** @type {ReactSetStateAction<ImageResult[]>} */
   const [watchedImages, setWatchedImages] = useState([]);
 
-  /** @type {[{account: Account, image: ImageResult}|null, Dispatch<SetStateAction<{account: Account, image: ImageResult}>>]} */
+  /** @type {ReactSetStateAction<{account: Account, image: ImageResult}|null>} */
   const [featuredImage, setFeaturedImage] = useState(null);
 
-  /** @type {[boolean, Dispatch<SetStateAction<boolean>>]} */
+  /** @type {ReactSetStateAction<boolean>} */
   const [isDbReady, setIsDbReady] = useState(false);
 
-  /** @type {[Account[]|null, Dispatch<SetStateAction<Account[]>>]} */
+  /** @type {ReactSetStateAction<Account[]|null>} */
   const [connectedAccounts, setConnectedAccounts] = useState(null);
 
-  /** @type {[boolean, Dispatch<SetStateAction<boolean>>]} */
+  /** @type {ReactSetStateAction<boolean>} */
   const [showSettings, setShowSettings] = useState(false);
 
-  /** @type {[boolean, Dispatch<SetStateAction<boolean>>]} */
+  /** @type {ReactSetStateAction<boolean>} */
   const [showNotifications, setShowNotifications] = useState(false);
 
-  /** @type {[boolean, Dispatch<SetStateAction<boolean>>]} */
+  /** @type {ReactSetStateAction<boolean>} */
   const [isHomepage, setIsHomepage] = useState(true);
 
-  /** @type {[boolean, Dispatch<SetStateAction<boolean>>]} */
+  /** @type {ReactSetStateAction<boolean>} */
   const [is404, setIs404] = useState(false);
 
-  /** @type {[ImageResult|null, Dispatch<SetStateAction<ImageResult|null>>]} */
+  /** @type {ReactSetStateAction<ImageResult|null>} */
   const [viewingImage, setViewingImage] = useState(null);
 
-  /** @type {[number, Dispatch<SetStateAction<number>>]} */
+  /** @type {ReactSetStateAction<number>} */
   const [pageLimit, setPageLimit] = useState(50);
 
-  /** @type {[number, Dispatch<SetStateAction<number>>]} */
+  /** @type {ReactSetStateAction<number>} */
   const [currentPage, setCurrentPage] = useState(1);
 
-  /** @type {[number, Dispatch<SetStateAction<number>>]} */
+  /** @type {ReactSetStateAction<number>} */
   const [totalPages, setTotalPages] = useState(1);
 
-  /** @type {[string, Dispatch<SetStateAction<string>>]} */
+  /** @type {ReactSetStateAction<string>} */
   const [searchQuery, setSearchQuery] = useState('');
 
-  /** @type {[string, Dispatch<SetStateAction<string>>]} */
+  /** @type {ReactSetStateAction<string>} */
   const [searchMode, setSearchMode] = useState('api');
 
-  /** @type {[boolean, Dispatch<SetStateAction<boolean>>]} */
+  /** @type {ReactSetStateAction<boolean>} */
   const [isSearching, setIsSearching] = useState(false);
 
-  /** @type {[boolean, Dispatch<SetStateAction<boolean>>]} */
+  /** @type {ReactSetStateAction<boolean>} */
   const [isRandomizing, setIsRandomizing] = useState(false);
 
-  /** @type {[boolean, Dispatch<SetStateAction<boolean>>]} */
+  /** @type {ReactSetStateAction<boolean>} */
   const [isDark, setIsDark] = useState(false);
 
-  /** @type {[{ booruUrl: string, username: string, id: number }|null, Dispatch<SetStateAction<{ booruUrl: string, username: string, id: number }|null>>]} */
+  /** @type {ReactSetStateAction<{ booruUrl: string, username: string, id: number }|null>} */
   const [viewingProfile, setViewingProfile] = useState(null);
 
-  /** @type {[string[], Dispatch<SetStateAction<string[]>>]} */
+  /** @type {ReactSetStateAction<string[]>} */
   const [visibleBoorus, setVisibleBoorus] = useState(() => {
     const saved = localStorage.getItem('app_visibleBoorus');
     return saved ? JSON.parse(saved) : [];
   });
 
-  /** @type {[Account|null, Dispatch<SetStateAction<Account|null>>]} */
+  /** @type {ReactSetStateAction<Account|null>} */
   const [selectedLinkAccount, setSelectedLinkAccount] = useState(null);
 
-  /** @type {[string, Dispatch<SetStateAction<string>>]} */
+  /** @type {ReactSetStateAction<string>} */
   const [sortField, setSortField] = useState('created_at');
 
-  /** @type {[string, Dispatch<SetStateAction<string>>]} */
+  /** @type {ReactSetStateAction<string>} */
   const [sortDirection, setSortDirection] = useState('desc');
 
   // --- Infinite Scroll States ---
-  /** @type {[boolean, Dispatch<SetStateAction<boolean>>]} */
+  /** @type {ReactSetStateAction<boolean>} */
   const [isInfiniteScroll, setIsInfiniteScroll] = useState(() => {
     return localStorage.getItem('app_infiniteScroll') === 'true';
   });
 
-  /** @type {[boolean, Dispatch<SetStateAction<boolean>>]} */
+  /** @type {ReactSetStateAction<boolean>} */
   const [isFetchingMore, setIsFetchingMore] = useState(false);
 
-  /** @type {[boolean, Dispatch<SetStateAction<boolean>>]} */
+  /** @type {ReactSetStateAction<boolean>} */
   const [galleryRateLimited, setGalleryRateLimited] = useState(false);
 
   /** @type {Ref<boolean>} */

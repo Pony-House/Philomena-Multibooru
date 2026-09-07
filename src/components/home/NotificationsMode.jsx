@@ -23,24 +23,24 @@ import { swManager } from '../../tools/utils.js';
  * @returns {import('react').JSX.Element}
  */
 export const NotificationsMode = ({ accounts, visibleBoorus, onClose, onGoHome }) => {
-  /** @type {[NotificationPermission, Dispatch<SetStateAction<NotificationPermission>>]} */
+  /** @type {ReactSetStateAction<NotificationPermission>} */
   const [permission, setPermission] = useState(Notification.permission);
 
-  /** @type {[number, Dispatch<SetStateAction<number>>]} */
+  /** @type {ReactSetStateAction<number>} */
   const [intervalMinutes, setIntervalMinutes] = useState(() => {
     /** @type {string | null} */
     const saved = localStorage.getItem('app_notifInterval');
     return saved ? Math.max(30, parseInt(saved, 10)) : 30;
   });
 
-  /** @type {['app' | 'booru', Dispatch<SetStateAction<'app' | 'booru'>>]} */
+  /** @type {ReactSetStateAction<'app' | 'booru'>} */
   const [clickAction, setClickAction] = useState(
     /** @type {() => 'booru'|'app'} */ () => {
       return localStorage.getItem('app_notifAction') === 'booru' ? 'booru' : 'app';
     },
   );
 
-  /** @type {['default' | 'watched' | 'custom', Dispatch<SetStateAction<'default' | 'watched' | 'custom'>>]} */
+  /** @type {ReactSetStateAction<'default' | 'watched' | 'custom'>} */
   const [searchType, setSearchType] = useState(
     /** @type {() => 'default' | 'watched' | 'custom'} */ () => {
       /** @type {string | null} */
@@ -49,26 +49,26 @@ export const NotificationsMode = ({ accounts, visibleBoorus, onClose, onGoHome }
     },
   );
 
-  /** @type {[string, Dispatch<SetStateAction<string>>]} */
+  /** @type {ReactSetStateAction<string>} */
   const [customQuery, setCustomQuery] = useState(() => {
     return localStorage.getItem('app_notifCustomQuery') || '';
   });
 
-  /** @type {[boolean, Dispatch<SetStateAction<boolean>>]} */
+  /** @type {ReactSetStateAction<boolean>} */
   const [enableSound, setEnableSound] = useState(() => {
     return localStorage.getItem('app_notifSound') !== 'false';
   });
 
-  /** @type {[boolean, Dispatch<SetStateAction<boolean>>]} */
+  /** @type {ReactSetStateAction<boolean>} */
   const [isActive, setIsActive] = useState(false);
 
-  /** @type {[Date | null, Dispatch<SetStateAction<Date | null>>]} */
+  /** @type {ReactSetStateAction<Date | null>} */
   const [lastChecked, setLastChecked] = useState(null);
 
-  /** @type {[string, Dispatch<SetStateAction<string>>]} */
+  /** @type {ReactSetStateAction<string>} */
   const [swError, setSwError] = useState('');
 
-  /** @type {[boolean, Dispatch<SetStateAction<boolean>>]} */
+  /** @type {ReactSetStateAction<boolean>} */
   const [isWaitingSw, setIsWaitingSw] = useState(false);
 
   /** @type {Ref<Record<string, number>>} */

@@ -1,7 +1,7 @@
 /**
  * Ping/Pong Logic to plugin test.
  *
- * @type {import('../TinyServiceWorkerEngine.mjs').SwPluginInstaller<any>}
+ * @type {import('../TinyServiceWorkerEngine.mjs').SwPluginInstaller<[]>}
  */
 const TinyPingPwa = (instance) => {
   const engine = instance.engine;

@@ -97,50 +97,50 @@ export const ImageViewer = ({
   onOpenImage,
   onNavigateImage,
 }) => {
-  /** @type {[boolean, Dispatch<SetStateAction<boolean>>]} */
+  /** @type {ReactSetStateAction<boolean>} */
   const [isLoading, setIsLoading] = useState(false);
 
-  /** @type {[boolean, Dispatch<SetStateAction<boolean>>]} */
+  /** @type {ReactSetStateAction<boolean>} */
   const [isNavigating, setIsNavigating] = useState(false);
 
-  /** @type {[boolean, Dispatch<SetStateAction<boolean>>]} */
+  /** @type {ReactSetStateAction<boolean>} */
   const [isInteractionReady, setIsInteractionReady] = useState(true);
 
-  /** @type {[boolean, Dispatch<SetStateAction<boolean>>]} */
+  /** @type {ReactSetStateAction<boolean>} */
   const [isZoomed, setIsZoomed] = useState(false);
 
-  /** @type {[CommentData[], Dispatch<SetStateAction<CommentData[]>>]} */
+  /** @type {ReactSetStateAction<CommentData[]>} */
   const [comments, setComments] = useState([]);
 
-  /** @type {[boolean, Dispatch<SetStateAction<boolean>>]} */
+  /** @type {ReactSetStateAction<boolean>} */
   const [isLoadingComments, setIsLoadingComments] = useState(true);
 
-  /** @type {[boolean, Dispatch<SetStateAction<boolean>>]} */
+  /** @type {ReactSetStateAction<boolean>} */
   const [showShare, setShowShare] = useState(false);
 
-  /** @type {[number, Dispatch<SetStateAction<number>>]} */
+  /** @type {ReactSetStateAction<number>} */
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   // State to control the loading visual of the main image/video
-  /** @type {[boolean, Dispatch<SetStateAction<boolean>>]} */
+  /** @type {ReactSetStateAction<boolean>} */
   const [isMediaLoaded, setIsMediaLoaded] = useState(false);
 
   // Recommendations States
-  /** @type {[ImageResult[], Dispatch<SetStateAction<ImageResult[]>>]} */
+  /** @type {ReactSetStateAction<ImageResult[]>} */
   const [recommendations, setRecommendations] = useState([]);
-  /** @type {[boolean, Dispatch<SetStateAction<boolean>>]} */
+  /** @type {ReactSetStateAction<boolean>} */
   const [isLoadingRecs, setIsLoadingRecs] = useState(false);
-  /** @type {[number, Dispatch<SetStateAction<number>>]} */
+  /** @type {ReactSetStateAction<number>} */
   const [recPage, setRecPage] = useState(1);
-  /** @type {[boolean, Dispatch<SetStateAction<boolean>>]} */
+  /** @type {ReactSetStateAction<boolean>} */
   const [hasMoreRecs, setHasMoreRecs] = useState(true);
-  /** @type {[boolean, Dispatch<SetStateAction<boolean>>]} */
+  /** @type {ReactSetStateAction<boolean>} */
   const [isAllowedToFetch, setIsAllowedToFetch] = useState(false);
-  /** @type {[number, Dispatch<SetStateAction<number>>]} */
+  /** @type {ReactSetStateAction<number>} */
   const [retryRecsCount, setRetryRecsCount] = useState(0);
 
   // Security Anti-Spam State
-  /** @type {[boolean, Dispatch<SetStateAction<boolean>>]} */
+  /** @type {ReactSetStateAction<boolean>} */
   const [isRateLimited, setIsRateLimited] = useState(false);
 
   /** @type {Ref<MediaPlayerInstance>} */
@@ -159,7 +159,7 @@ export const ImageViewer = ({
   /** @type {Ref<number>} */
   const lastNavActionTime = useRef(0); // Security cooldown for keyboard events
 
-  /** @type {[boolean, Dispatch<SetStateAction<boolean>>]} */
+  /** @type {ReactSetStateAction<boolean>} */
   const [isLocalFaved, setIsLocalFaved] = useState(false);
 
   /** @type {boolean} */
@@ -222,7 +222,7 @@ export const ImageViewer = ({
   // Initial Spoiler check
   const isImageSpoiler = image?.spoilered;
 
-  /** @type {[boolean, Dispatch<SetStateAction<boolean>>]} */
+  /** @type {ReactSetStateAction<boolean>} */
   const [revealed, setRevealed] = useState(!isImageSpoiler);
 
   const enableRecs = localStorage.getItem('app_enableRecs') === 'true';

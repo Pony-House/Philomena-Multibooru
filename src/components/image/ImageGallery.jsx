@@ -23,7 +23,7 @@ import { checkLocalFave, toggleLocalFave } from '../../services/api/LocalFaves.j
  * @param {{ id: string, icon: string, label: string, url: string, openLeft: boolean, onActionRecord: (id: string, actionType: string) => void, onClose: () => void }} props
  */
 const ContextMenuGroup = ({ id, icon, label, url, openLeft, onActionRecord, onClose }) => {
-  /** @type {[boolean, Dispatch<SetStateAction<boolean>>]} */
+  /** @type {ReactSetStateAction<boolean>} */
   const [isOpen, setIsOpen] = useState(false);
 
   /**
@@ -345,10 +345,10 @@ const ContextMenu = ({ x, y, img, onClose, onOpenImage, hostname }) => {
  * @param {{ img: ImageResult; className?: string; onOpenImage?: (img: ImageResult) => void }} props
  */
 export const Image = ({ img, className, onOpenImage }) => {
-  /** @type {[Set<number>, Dispatch<SetStateAction<Set<number>>>]} */
+  /** @type {ReactSetStateAction<Set<number>>>} */
   const [unspoileredIds, setUnspoileredIds] = useState(new Set());
 
-  /** @type {[{ visible: boolean, x: number, y: number }, Dispatch<SetStateAction<{ visible: boolean, x: number, y: number }>>]} */
+  /** @type {ReactSetStateAction<{ visible: boolean, x: number, y: number }>} */
   const [contextMenu, setContextMenu] = useState({ visible: false, x: 0, y: 0 });
 
   /** @type {boolean} */
@@ -357,7 +357,7 @@ export const Image = ({ img, className, onOpenImage }) => {
   /** @type {boolean} */
   const localFavesEnabled = localStorage.getItem('app_localFavesEnabled') === 'true';
 
-  /** @type {[boolean, Dispatch<SetStateAction<boolean>>]} */
+  /** @type {ReactSetStateAction<boolean>} */
   const [isLocal, setIsLocal] = useState(false);
 
   useEffect(() => {

@@ -1,18 +1,18 @@
 /// <reference types="vite/client" />
+import React from 'react';
 
 import TinyServiceWorker from 'tiny-essentials/libs/router/TinyServiceWorker';
-import {
-  alert,
-  confirm,
-  prompt,
-} from 'tiny-essentials/webTemplates/bootstrap/5.3/html/BootstrapDialogs';
 
 declare global {
+  type ReactSetStateAction<Value = any> = [
+    Value, 
+    React.Dispatch<React.SetStateAction<Value>>
+  ];
   interface Window {
     __TINY_PWA_MANIFEST__: Record<string, any>;
-    swManager: TinyServiceWorker;
-    alert: alert;
-    confirm: confirm;
-    prompt: prompt;
+    swManager: TinyServiceWorker<"web-manager", "/sw.js">;
+    // alert: typeof alert;
+    // confirm: typeof confirm;
+    // prompt: typeof prompt;
   }
 }

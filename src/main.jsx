@@ -6,6 +6,7 @@ import {
   confirm,
   prompt,
 } from 'tiny-essentials/webTemplates/bootstrap/5.3/html/BootstrapDialogs';
+// @ts-ignore
 import { Modal } from 'bootstrap/dist/js/bootstrap.bundle.min.js';
 
 import '@vidstack/react/player/styles/default/theme.css';
@@ -39,7 +40,10 @@ BootstrapDialogs.titleConfig = {
   styles: { ...titleConfig.styles, color: '#fff' },
 };
 
-createRoot(document.getElementById('root')).render(
+const root = document.getElementById('root');
+if (!root) throw new Error('Root container not found!');
+
+createRoot(root).render(
   <StrictMode>
     <ServiceWorkerSync />
     <App />
