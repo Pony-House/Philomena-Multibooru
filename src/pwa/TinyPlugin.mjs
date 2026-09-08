@@ -30,6 +30,15 @@ class TinyPluginCore extends TinyDebugger {
   }
 
   /**
+   * Registers a plugin instance into the engine's internal plugin registry.
+   *
+   * @param {TinyPlugin<Engine, string, string, any[]>} plugin - The plugin instance to be registered.
+   */
+  _addPlugin(plugin) {
+    this.#plugins.set(plugin.id, plugin);
+  }
+
+  /**
    * Installs a new plugin into the engine and starts its lifecycle.
    * @template {string} Id
    * @template {string} Version
@@ -40,15 +49,6 @@ class TinyPluginCore extends TinyDebugger {
    */
   installPlugin(plugin, ...options) {
     return TinyPlugin.addModuleToCore(this, plugin, ...options);
-  }
-
-  /**
-   * Registers a plugin instance into the engine's internal plugin registry.
-   *
-   * @param {TinyPlugin<Engine, string, string, any[]>} plugin - The plugin instance to be registered.
-   */
-  _addPlugin(plugin) {
-    this.#plugins.set(plugin.id, plugin);
   }
 
   /**
