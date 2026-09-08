@@ -253,7 +253,7 @@ const getResType = (code) => {
 /**
  * A function used to install a plugin into the engine.
  * @template {any[]} Options
- * @typedef { (plugin: TinyServiceWorkerPlugin, ...options: Options) => void } SwPluginInstaller
+ * @typedef { (plugin: TinyServiceWorkerPlugin<Options>, ...options: Options) => void } SwPluginInstaller
  */
 
 /**
@@ -311,7 +311,7 @@ class TinyServiceWorkerPlugin {
 
   /**
    * Gets the configuration options of the plugin.
-   * @returns {Readonly<Options[]>} A read-only array of options.
+   * @returns {Readonly<Options>} A read-only array of options.
    */
   get options() {
     return Object.freeze(this.#options);
