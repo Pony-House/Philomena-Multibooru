@@ -97,50 +97,50 @@ export const ImageViewer = ({
   onOpenImage,
   onNavigateImage,
 }) => {
-  /** @type {ReactSetStateAction<boolean>} */
+  /** @type {UseStateTemplate<boolean>} */
   const [isLoading, setIsLoading] = useState(false);
 
-  /** @type {ReactSetStateAction<boolean>} */
+  /** @type {UseStateTemplate<boolean>} */
   const [isNavigating, setIsNavigating] = useState(false);
 
-  /** @type {ReactSetStateAction<boolean>} */
+  /** @type {UseStateTemplate<boolean>} */
   const [isInteractionReady, setIsInteractionReady] = useState(true);
 
-  /** @type {ReactSetStateAction<boolean>} */
+  /** @type {UseStateTemplate<boolean>} */
   const [isZoomed, setIsZoomed] = useState(false);
 
-  /** @type {ReactSetStateAction<CommentData[]>} */
+  /** @type {UseStateTemplate<CommentData[]>} */
   const [comments, setComments] = useState([]);
 
-  /** @type {ReactSetStateAction<boolean>} */
+  /** @type {UseStateTemplate<boolean>} */
   const [isLoadingComments, setIsLoadingComments] = useState(true);
 
-  /** @type {ReactSetStateAction<boolean>} */
+  /** @type {UseStateTemplate<boolean>} */
   const [showShare, setShowShare] = useState(false);
 
-  /** @type {ReactSetStateAction<number>} */
+  /** @type {UseStateTemplate<number>} */
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   // State to control the loading visual of the main image/video
-  /** @type {ReactSetStateAction<boolean>} */
+  /** @type {UseStateTemplate<boolean>} */
   const [isMediaLoaded, setIsMediaLoaded] = useState(false);
 
   // Recommendations States
-  /** @type {ReactSetStateAction<ImageResult[]>} */
+  /** @type {UseStateTemplate<ImageResult[]>} */
   const [recommendations, setRecommendations] = useState([]);
-  /** @type {ReactSetStateAction<boolean>} */
+  /** @type {UseStateTemplate<boolean>} */
   const [isLoadingRecs, setIsLoadingRecs] = useState(false);
-  /** @type {ReactSetStateAction<number>} */
+  /** @type {UseStateTemplate<number>} */
   const [recPage, setRecPage] = useState(1);
-  /** @type {ReactSetStateAction<boolean>} */
+  /** @type {UseStateTemplate<boolean>} */
   const [hasMoreRecs, setHasMoreRecs] = useState(true);
-  /** @type {ReactSetStateAction<boolean>} */
+  /** @type {UseStateTemplate<boolean>} */
   const [isAllowedToFetch, setIsAllowedToFetch] = useState(false);
-  /** @type {ReactSetStateAction<number>} */
+  /** @type {UseStateTemplate<number>} */
   const [retryRecsCount, setRetryRecsCount] = useState(0);
 
   // Security Anti-Spam State
-  /** @type {ReactSetStateAction<boolean>} */
+  /** @type {UseStateTemplate<boolean>} */
   const [isRateLimited, setIsRateLimited] = useState(false);
 
   /** @type {Ref<MediaPlayerInstance>} */
@@ -159,7 +159,7 @@ export const ImageViewer = ({
   /** @type {Ref<number>} */
   const lastNavActionTime = useRef(0); // Security cooldown for keyboard events
 
-  /** @type {ReactSetStateAction<boolean>} */
+  /** @type {UseStateTemplate<boolean>} */
   const [isLocalFaved, setIsLocalFaved] = useState(false);
 
   /** @type {boolean} */
@@ -222,7 +222,7 @@ export const ImageViewer = ({
   // Initial Spoiler check
   const isImageSpoiler = image?.spoilered;
 
-  /** @type {ReactSetStateAction<boolean>} */
+  /** @type {UseStateTemplate<boolean>} */
   const [revealed, setRevealed] = useState(!isImageSpoiler);
 
   const enableRecs = localStorage.getItem('app_enableRecs') === 'true';

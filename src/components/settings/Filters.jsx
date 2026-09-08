@@ -26,29 +26,29 @@ import {
  */
 
 export const Filters = ({ loadAccounts, accounts, activeTab }) => {
-  /** @type {ReactSetStateAction<FilterItem[]>} */
+  /** @type {UseStateTemplate<FilterItem[]>} */
   const [systemFilters, setSystemFilters] = useState([]);
 
-  /** @type {ReactSetStateAction<FilterItem[]>} */
+  /** @type {UseStateTemplate<FilterItem[]>} */
   const [userFilters, setUserFilters] = useState([]);
 
-  /** @type {ReactSetStateAction<number>} */
+  /** @type {UseStateTemplate<number>} */
   const [sysPage, setSysPage] = useState(1);
 
-  /** @type {ReactSetStateAction<number>} */
+  /** @type {UseStateTemplate<number>} */
   const [userPage, setUserPage] = useState(1);
 
-  /** @type {ReactSetStateAction<boolean>} */
+  /** @type {UseStateTemplate<boolean>} */
   const [isLoadingFilters, setIsLoadingFilters] = useState(false);
 
-  /** @type {ReactSetStateAction<Record<string, number>>>} */
+  /** @type {UseStateTemplate<Record<string, number>>>} */
   const [pendingFilters, setPendingFilters] = useState({});
 
-  /** @type {ReactSetStateAction<Record<string, number>>>} */
+  /** @type {UseStateTemplate<Record<string, number>>>} */
   const [savedFilters, setSavedFilters] = useState({});
 
   // --- Filters State ---
-  /** @type {ReactSetStateAction<Account|null>} */
+  /** @type {UseStateTemplate<Account|null>} */
   const [selectedFilterAccount, setSelectedFilterAccount] = useState(null);
 
   useEffect(() => {

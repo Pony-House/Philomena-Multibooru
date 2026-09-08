@@ -63,22 +63,22 @@ export const UserProfile = ({
   onOpenProfile,
   handleQuickLinkClick,
 }) => {
-  /** @type {ReactSetStateAction<UserProfileData|null>} */
+  /** @type {UseStateTemplate<UserProfileData|null>} */
   const [pf, setProfile] = useState(null);
 
-  /** @type {ReactSetStateAction<boolean>} */
+  /** @type {UseStateTemplate<boolean>} */
   const [isLoading, setIsLoading] = useState(true);
 
-  /** @type {ReactSetStateAction<ImageResult[]>} */
+  /** @type {UseStateTemplate<ImageResult[]>} */
   const [recentUploads, setRecentUploads] = useState([]);
 
-  /** @type {ReactSetStateAction<ImageResult[]>} */
+  /** @type {UseStateTemplate<ImageResult[]>} */
   const [recentFaves, setRecentFaves] = useState([]);
 
-  /** @type {ReactSetStateAction<CommentData[]>} */
+  /** @type {UseStateTemplate<CommentData[]>} */
   const [recentComments, setRecentComments] = useState([]);
 
-  /** @type {ReactSetStateAction<number>} */
+  /** @type {UseStateTemplate<number>} */
   const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   /** @type {Ref<{ url: string|null, id: number|null, trigger: number|null, isMounted: boolean|null }>} */

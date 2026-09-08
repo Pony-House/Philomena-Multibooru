@@ -14,7 +14,7 @@ import { useEffect, useState } from 'react';
  * @param {{ currentPage: number, isHomepage: boolean, totalPages: number, onPageChange: (page: number) => void, className?: string }} props
  */
 export const PaginationBar = ({ currentPage, isHomepage, totalPages, onPageChange, className }) => {
-  /** @type {ReactSetStateAction<string>} */
+  /** @type {UseStateTemplate<string>} */
   const [jumpValue, setJumpValue] = useState(currentPage.toString());
 
   useEffect(() => {

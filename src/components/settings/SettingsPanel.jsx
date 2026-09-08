@@ -35,20 +35,20 @@ import { RecommendationsSettings } from './RecommendationsSettings.jsx';
  * @param {{ isDark: boolean; onClose: () => void; }} props
  */
 export const SettingsPanel = ({ isDark }) => {
-  /** @type {ReactSetStateAction<boolean>} */
+  /** @type {UseStateTemplate<boolean>} */
   const [isLoading, setIsLoading] = useState(true);
 
-  /** @type {ReactSetStateAction<number>} */
+  /** @type {UseStateTemplate<number>} */
   const [maxItemsLimit, setMaxItemsLimit] = useState(10000);
 
-  /** @type {ReactSetStateAction<boolean>} */
+  /** @type {UseStateTemplate<boolean>} */
   const [isPersistent, setIsPersistent] = useState(false);
 
   /* More Stuff */
-  /** @type {ReactSetStateAction<string>} */
+  /** @type {UseStateTemplate<string>} */
   const [activeTab, setActiveTab] = useState('accounts');
 
-  /** @type {ReactSetStateAction<Account[]>} */
+  /** @type {UseStateTemplate<Account[]>} */
   const [accounts, setAccounts] = useState([]);
 
   /**

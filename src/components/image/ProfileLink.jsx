@@ -18,7 +18,7 @@ import { createPortal } from 'react-dom';
  * @param {{ id: string, icon: string, label: string, url: string, openLeft: boolean, onActionRecord: (id: string, actionType: string) => void, onClose: () => void }} props
  */
 const ContextMenuGroup = ({ id, icon, label, url, openLeft, onActionRecord, onClose }) => {
-  /** @type {ReactSetStateAction<boolean>} */
+  /** @type {UseStateTemplate<boolean>} */
   const [isOpen, setIsOpen] = useState(false);
 
   /**
@@ -309,7 +309,7 @@ export const ProfileLink = ({
   onClick,
   openProfile,
 }) => {
-  /** @type {ReactSetStateAction<{ visible: boolean, x: number, y: number }>} */
+  /** @type {UseStateTemplate<{ visible: boolean, x: number, y: number }>} */
   const [contextMenu, setContextMenu] = useState({ visible: false, x: 0, y: 0 });
 
   /** @type {boolean} */

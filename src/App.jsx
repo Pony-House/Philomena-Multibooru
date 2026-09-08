@@ -71,96 +71,96 @@ const scrollUp = () => window.scrollTo({ top: 0, behavior: 'smooth' });
  */
 
 const App = () => {
-  /** @type {ReactSetStateAction<boolean>} */
+  /** @type {UseStateTemplate<boolean>} */
   const [isReady, setIsReady] = useState(false);
-  /** @type {ReactSetStateAction<number>} */
+  /** @type {UseStateTemplate<number>} */
   const [totalItems, setTotalItems] = useState(0);
 
-  /** @type {ReactSetStateAction<ImageResult[]>} */
+  /** @type {UseStateTemplate<ImageResult[]>} */
   const [currentImages, setCurrentImages] = useState([]);
 
-  /** @type {ReactSetStateAction<ImageResult[]>} */
+  /** @type {UseStateTemplate<ImageResult[]>} */
   const [trendingImages, setTrendingImages] = useState([]);
 
-  /** @type {ReactSetStateAction<ImageResult[]>} */
+  /** @type {UseStateTemplate<ImageResult[]>} */
   const [watchedImages, setWatchedImages] = useState([]);
 
-  /** @type {ReactSetStateAction<{account: Account, image: ImageResult}|null>} */
+  /** @type {UseStateTemplate<{account: Account, image: ImageResult}|null>} */
   const [featuredImage, setFeaturedImage] = useState(null);
 
-  /** @type {ReactSetStateAction<boolean>} */
+  /** @type {UseStateTemplate<boolean>} */
   const [isDbReady, setIsDbReady] = useState(false);
 
-  /** @type {ReactSetStateAction<Account[]|null>} */
+  /** @type {UseStateTemplate<Account[]|null>} */
   const [connectedAccounts, setConnectedAccounts] = useState(null);
 
-  /** @type {ReactSetStateAction<boolean>} */
+  /** @type {UseStateTemplate<boolean>} */
   const [showSettings, setShowSettings] = useState(false);
 
-  /** @type {ReactSetStateAction<boolean>} */
+  /** @type {UseStateTemplate<boolean>} */
   const [showNotifications, setShowNotifications] = useState(false);
 
-  /** @type {ReactSetStateAction<boolean>} */
+  /** @type {UseStateTemplate<boolean>} */
   const [isHomepage, setIsHomepage] = useState(true);
 
-  /** @type {ReactSetStateAction<boolean>} */
+  /** @type {UseStateTemplate<boolean>} */
   const [is404, setIs404] = useState(false);
 
-  /** @type {ReactSetStateAction<ImageResult|null>} */
+  /** @type {UseStateTemplate<ImageResult|null>} */
   const [viewingImage, setViewingImage] = useState(null);
 
-  /** @type {ReactSetStateAction<number>} */
+  /** @type {UseStateTemplate<number>} */
   const [pageLimit, setPageLimit] = useState(50);
 
-  /** @type {ReactSetStateAction<number>} */
+  /** @type {UseStateTemplate<number>} */
   const [currentPage, setCurrentPage] = useState(1);
 
-  /** @type {ReactSetStateAction<number>} */
+  /** @type {UseStateTemplate<number>} */
   const [totalPages, setTotalPages] = useState(1);
 
-  /** @type {ReactSetStateAction<string>} */
+  /** @type {UseStateTemplate<string>} */
   const [searchQuery, setSearchQuery] = useState('');
 
-  /** @type {ReactSetStateAction<string>} */
+  /** @type {UseStateTemplate<string>} */
   const [searchMode, setSearchMode] = useState('api');
 
-  /** @type {ReactSetStateAction<boolean>} */
+  /** @type {UseStateTemplate<boolean>} */
   const [isSearching, setIsSearching] = useState(false);
 
-  /** @type {ReactSetStateAction<boolean>} */
+  /** @type {UseStateTemplate<boolean>} */
   const [isRandomizing, setIsRandomizing] = useState(false);
 
-  /** @type {ReactSetStateAction<boolean>} */
+  /** @type {UseStateTemplate<boolean>} */
   const [isDark, setIsDark] = useState(false);
 
-  /** @type {ReactSetStateAction<{ booruUrl: string, username: string, id: number }|null>} */
+  /** @type {UseStateTemplate<{ booruUrl: string, username: string, id: number }|null>} */
   const [viewingProfile, setViewingProfile] = useState(null);
 
-  /** @type {ReactSetStateAction<string[]>} */
+  /** @type {UseStateTemplate<string[]>} */
   const [visibleBoorus, setVisibleBoorus] = useState(() => {
     const saved = localStorage.getItem('app_visibleBoorus');
     return saved ? JSON.parse(saved) : [];
   });
 
-  /** @type {ReactSetStateAction<Account|null>} */
+  /** @type {UseStateTemplate<Account|null>} */
   const [selectedLinkAccount, setSelectedLinkAccount] = useState(null);
 
-  /** @type {ReactSetStateAction<string>} */
+  /** @type {UseStateTemplate<string>} */
   const [sortField, setSortField] = useState('created_at');
 
-  /** @type {ReactSetStateAction<string>} */
+  /** @type {UseStateTemplate<string>} */
   const [sortDirection, setSortDirection] = useState('desc');
 
   // --- Infinite Scroll States ---
-  /** @type {ReactSetStateAction<boolean>} */
+  /** @type {UseStateTemplate<boolean>} */
   const [isInfiniteScroll, setIsInfiniteScroll] = useState(() => {
     return localStorage.getItem('app_infiniteScroll') === 'true';
   });
 
-  /** @type {ReactSetStateAction<boolean>} */
+  /** @type {UseStateTemplate<boolean>} */
   const [isFetchingMore, setIsFetchingMore] = useState(false);
 
-  /** @type {ReactSetStateAction<boolean>} */
+  /** @type {UseStateTemplate<boolean>} */
   const [galleryRateLimited, setGalleryRateLimited] = useState(false);
 
   /** @type {Ref<boolean>} */

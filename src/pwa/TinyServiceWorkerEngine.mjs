@@ -522,7 +522,7 @@ class TinyServiceWorkerEngine extends TinyDebugger {
    */
   getCodeCfg(c) {
     if (typeof c !== 'number') throw new TypeError('Code must be a number.');
-    /** @type {RouterCodeConfig} */
+    /** @type {RouterCodeConfig|undefined} */
     let routerCodeCfg;
 
     // 1. Check user-defined codes in the Map

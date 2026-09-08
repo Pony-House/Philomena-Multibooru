@@ -24,7 +24,7 @@ export const ThemeSettings = ({ isDark }) => {
   /** @type {Ref<HTMLInputElement | null>} */
   const fileInputRef = useRef(null);
 
-  /** @type {ReactSetStateAction<string>} */
+  /** @type {UseStateTemplate<string>} */
   const [themeMode, setThemeMode] = useState(localStorage.getItem('app_themeMode') || 'system');
 
   /* Global Colors */
