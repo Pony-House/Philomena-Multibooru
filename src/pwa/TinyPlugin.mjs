@@ -120,6 +120,17 @@ class TinyPlugin {
     this.#version = new TinyVersion(value);
   }
 
+
+  /**
+   * Retrieves the current version of the plugin as a TinyVersion instance.
+   * @returns {TinyVersion<string>} The TinyVersion instance representing the plugin's version.
+   */
+  get tinyVersion() {
+    if (!this.#version) throw new Error('Plugin version is not set.');
+    return this.#version;
+  }
+
+
   /**
    * Gets the engine instance associated with this plugin.
    * @returns {Engine} The engine instance.
@@ -147,15 +158,6 @@ class TinyPlugin {
     this.#engine = engine;
     this.#installer = installer;
     this.#options = ops;
-  }
-
-  /**
-   * Retrieves the current version of the plugin as a TinyVersion instance.
-   * @returns {TinyVersion<string>} The TinyVersion instance representing the plugin's version.
-   */
-  getVersion() {
-    if (!this.#version) throw new Error('Plugin version is not set.');
-    return this.#version;
   }
 
   /**
