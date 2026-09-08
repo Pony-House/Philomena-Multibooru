@@ -23,23 +23,20 @@ tinySw.install(RegisterGlobCachePlugin, {
   cacheName: 'static-assets-v1',
 });
 
-// Static routes matching
-['/', '/notifications', '/settings', '/search'].forEach((path) =>
+[
+  // Static routes matching
+  '/',
+  '/notifications',
+  '/settings',
+  '/search',
+  // Dynamic route pattern: /<any.hostname.com>/images/<id> or /<any.hostname.com>/profiles/<id>
+  // This regex matches a domain-like string in the first segment
+  '/:host/images/:id',
+  '/:host/profiles/:id',
+].forEach((path) =>
   tinySw.addFetchUrlListener(path, (f, r) => {
     // We only intercept navigation requests (HTML)
     if (!isNavigate(f.request)) return;
-    if (f.request.mode !== 'navigate') return;
     r.code = 200;
   }),
-);
-
-// Dynamic route pattern: /<any.hostname.com>/images/<id> or /<any.hostname.com>/profiles/<id>
-// This regex matches a domain-like string in the first segment
-tinySw.addFetchRegExpListener(
-  '^\\/([a-z0-9.-]+\\.[a-z]{2,})\\/(images|profiles)\\/[^/]+$',
-  (f, r) => {
-    // We only intercept navigation requests (HTML)
-    if (!isNavigate(f.request)) return;
-    r.code = 200;
-  },
 );

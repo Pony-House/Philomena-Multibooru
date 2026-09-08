@@ -1310,8 +1310,6 @@ class TinyServiceWorkerEngine extends TinyDebugger {
     const request = event.request;
     /** @type {FetchCallback|null} */
     let matchedCallback = null;
-    /** @type {FetchObjParams} */
-    let routeParams = {};
     const isSameOrigin = TinyServiceWorkerEngine.isSameOrigin(request);
 
     /** @type {FetchCheckerResult} */
@@ -1323,7 +1321,7 @@ class TinyServiceWorkerEngine extends TinyDebugger {
       event,
       request,
       url,
-      params: routeParams,
+      params: {},
       replyTemplate: TinyServiceWorkerEngine.replyTemplate,
       replyTo: TinyServiceWorkerEngine.replyTo,
       replyToAll: TinyServiceWorkerEngine.replyToAll,
@@ -1350,11 +1348,11 @@ class TinyServiceWorkerEngine extends TinyDebugger {
           // Converts the key pattern into the extraction Regex
           const seg = segmentExtractorV1(pattern);
           const { match, params } = seg.exec(url.pathname);
-          routeParams = params;
+          fetchObj.params = params;
           if (match) {
             matchedCallback = callback;
+            break; // Route type detected, breaking the loop
           }
-          break; // Route type detected, breaking the loop
         }
 
         // Exact match
