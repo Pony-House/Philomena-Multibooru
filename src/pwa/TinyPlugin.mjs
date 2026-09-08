@@ -4,7 +4,7 @@ import TinyVersion from 'tiny-essentials/libs/plugin/TinyVersion';
 /**
  * # TINY PLUGIN SYSTEM - ADVANCED DEVELOPER GUIDE
  *
- * This system uses a "Double-Layer Validation" architecture to ensure maximum 
+ * This system uses a "Double-Layer Validation" architecture to ensure maximum
  * stability and developer experience (DX).
  *
  * ## 1. CORE ENGINE SETUP (The Host)
@@ -32,7 +32,7 @@ import TinyVersion from 'tiny-essentials/libs/plugin/TinyVersion';
  *
  * ## 3. [CRITICAL] ARCHITECTURAL INTEGRITY
  * - **NO MUTATION:** Never attempt to manually inject, add, or modify properties or methods on the `instance` (`TinyPlugin`) or the `engine` (`TinyPluginCore`) inside the installer function.
- * - **THE EXTENSION PATTERN (@extended):** If your plugin requires custom methods or properties on the engine, you **must** first create a custom class that extends `TinyPluginCore`. Once your custom subclass is defined, use it as the `Engine` type reference in your plugin's JSDoc. 
+ * - **THE EXTENSION PATTERN (@extended):** If your plugin requires custom methods or properties on the engine, you **must** first create a custom class that extends `TinyPluginCore`. Once your custom subclass is defined, use it as the `Engine` type reference in your plugin's JSDoc.
  * - *Rule:* Expand the core via inheritance **before** implementing the plugin logic.
  *
  * ## 4. PROJECT INTEGRATION

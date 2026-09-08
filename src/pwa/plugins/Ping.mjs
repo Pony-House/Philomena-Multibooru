@@ -1,3 +1,5 @@
+import TinyServiceWorkerEngine from '../TinyServiceWorkerEngine.mjs';
+
 /**
  * Ping/Pong Logic to plugin test.
  *
@@ -10,6 +12,10 @@ const TinyPingPwa = (instance) => {
   instance.description = 'Ping tester plugin.';
   instance.authors = ['JasminDreasond'];
   instance.contributors = ['JasminDreasond'];
+  
+  if (!(engine instanceof TinyServiceWorkerEngine)) {
+    throw new TypeError('Plugin requires a TinyServiceWorkerEngine instance to function.');
+  }
 
   engine.addMessageListener('ping', ({ reply }) => {
     reply('pong', { msg: 'mio! :3' });

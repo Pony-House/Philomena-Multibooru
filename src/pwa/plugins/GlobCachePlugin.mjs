@@ -1,5 +1,6 @@
 import { isJsonObject } from 'tiny-essentials/basics/objChecker';
 import { compileGlobRegExp } from 'tiny-essentials/regexp/Glob';
+import TinyServiceWorkerEngine from '../TinyServiceWorkerEngine.mjs';
 
 /**
  * @typedef {Object} GlobCacheOptions
@@ -23,6 +24,10 @@ const GlobCachePlugin = (instance, options) => {
   instance.contributors = ['JasminDreasond'];
 
   // 1. Validation
+  if (!(engine instanceof TinyServiceWorkerEngine)) {
+    throw new TypeError('Plugin requires a TinyServiceWorkerEngine instance to function.');
+  }
+
   if (!isJsonObject(options)) {
     throw new TypeError('[GlobCachePlugin] Options must be a non-null object.');
   }
