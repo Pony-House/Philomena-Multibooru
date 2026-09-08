@@ -2,6 +2,33 @@ import TinyDebugger from 'tiny-essentials/libs/tools/TinyDebugger';
 import TinyVersion from 'tiny-essentials/libs/plugin/TinyVersion';
 
 /**
+ * # TINY PLUGIN SYSTEM - DEVELOPER WORKFLOW GUIDE
+ *
+ * This system provides a structured lifecycle for managing plugins. 
+ * Follow these steps to implement it in your project:
+ *
+ * 1. CORE INTEGRATION:
+ *    - Create your main application class.
+ *    - Extend this class from `TinyPluginCore`.
+ *    - This grants your class the ability to manage a registry of plugins.
+ *
+ * 2. PLUGIN CREATION:
+ *    - Create an isolated JavaScript file for your plugin.
+ *    - Export a function that follows the `TinyPluginInstaller` signature.
+ *    - Implement your plugin's specific logic inside this installer function.
+ *
+ * 3. PROJECT INTEGRATION:
+ *    - In your main application file, import the instance of your `TinyPluginCore` class.
+ *    - Import the installer function from your plugin file.
+ *
+ * 4. INITIALIZATION:
+ *    - Call the `installPlugin` method on your `TinyPluginCore` instance.
+ *    - Pass the plugin (installer function) and any required configuration options.
+ *    - The method will handle the entire lifecycle, registering the plugin 
+ *      and returning a fully initialized plugin instance ready for use.
+ */
+
+/**
  * @typedef {import('tiny-essentials/libs/tools/TinyDebugger').DebuggerConstructor} DebuggerConstructor
  */
 
