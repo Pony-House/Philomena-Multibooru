@@ -46,6 +46,12 @@ class TinyPlugin {
   /** @type {IdString} The unique id of the plugin. */
   // @ts-ignore
   #id = '';
+  /** @type {string} */
+  #description = '';
+  /** @type {string[]} */
+  #authors = [];
+  /** @type {string[]} */
+  #contributors = [];
   /** @type {TinyVersion<VersionString>|null} The version string of the plugin. */
   #version = null;
   /** @type {Engine} The engine instance this plugin is attached to. */
@@ -104,6 +110,80 @@ class TinyPlugin {
     if (typeof value !== 'string') throw new TypeError('Id must be a string.');
     if (value.length === 0) throw new TypeError('Id cannot be empty.');
     this.#id = value;
+  }
+
+  /**
+   * Gets the description of the plugin.
+   * @returns {string} The plugin description.
+   */
+  get description() {
+    if (this.#description.length === 0) throw new Error('Plugin description is not set.');
+    return this.#description;
+  }
+
+  /**
+   * Sets the description of the plugin.
+   * @param {string} value - The new description for the plugin.
+   * @throws {Error} If the description is already set.
+   * @throws {TypeError} If the value is not a string or is empty.
+   */
+  set description(value) {
+    if (this.#description.length !== 0) throw new Error('Description is already set.');
+    if (typeof value !== 'string') throw new TypeError('Description must be a string.');
+    if (value.length === 0) throw new TypeError('Description cannot be empty.');
+    this.#description = value;
+  }
+
+  /**
+   * Gets the authors of the plugin.
+   * @returns {readonly string[]} The plugin authors.
+   */
+  get authors() {
+    if (this.#authors.length === 0) throw new Error('Plugin authors is not set.');
+    return Object.freeze([...this.#authors]);
+  }
+
+  /**
+   * Sets the authors of the plugin.
+   * @param {IdString} value - The new authors list for the plugin.
+   * @throws {Error} If the authors is already set.
+   * @throws {TypeError} If the value is not a array of strings or is empty.
+   */
+  set authors(value) {
+    if (this.#authors.length !== 0) throw new Error('Authors is already set.');
+    if (
+      !Array.isArray(value) ||
+      !value.every((v) => typeof v === 'string' && v.trim().length !== 0)
+    )
+      throw new TypeError('Authors must be a array of non-empty strings.');
+    if (value.length === 0) throw new TypeError('Authors cannot be empty.');
+    this.#authors = [...new Set([...value])];
+  }
+
+  /**
+   * Gets the contributors of the plugin.
+   * @returns {readonly string[]} The plugin contributors.
+   */
+  get contributors() {
+    if (this.#contributors.length === 0) throw new Error('Plugin contributors is not set.');
+    return Object.freeze([...this.#contributors]);
+  }
+
+  /**
+   * Sets the contributors of the plugin.
+   * @param {IdString} value - The new contributors list for the plugin.
+   * @throws {Error} If the contributors is already set.
+   * @throws {TypeError} If the value is not a array of strings or is empty.
+   */
+  set contributors(value) {
+    if (this.#contributors.length !== 0) throw new Error('Authors is already set.');
+    if (
+      !Array.isArray(value) ||
+      !value.every((v) => typeof v === 'string' && v.trim().length !== 0)
+    )
+      throw new TypeError('Authors must be a array of non-empty strings.');
+    if (value.length === 0) throw new TypeError('Authors cannot be empty.');
+    this.#contributors = [...new Set([...value])];
   }
 
   /**
@@ -174,6 +254,9 @@ class TinyPlugin {
     if (this.#isReady) throw new Error('Plugin is already ready.');
     this.#installer(this, ...this.#options);
     if (this.#id.length === 0) throw new Error('Plugin id is not set.');
+    if (this.#description.length === 0) throw new Error('Plugin description is not set.');
+    if (this.#authors.length === 0) throw new Error('Plugin authors is not set.');
+    if (this.#contributors.length === 0) throw new Error('Plugin contributors is not set.');
     if (!this.#version) throw new Error('Plugin version is not set.');
   }
 }
