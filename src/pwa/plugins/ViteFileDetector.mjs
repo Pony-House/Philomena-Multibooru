@@ -19,7 +19,7 @@ const DEFAULT_OPTIONS = {
 /**
  * A plugin for TinyServiceWorkerEngine to detect and bypass Vite-specific files.
  *
- * @type {import('../TinyServiceWorkerEngine.mjs').SwPluginInstaller<'1.0.0', [Partial<ViteFileDetectorOptions>]|[]>}
+ * @type {import('../TinyServiceWorkerEngine.mjs').SwPluginInstaller<'ViteFileDetector', '1.0.0', [Partial<ViteFileDetectorOptions>]|[]>}
  * @throws {TypeError} If the engine is invalid or if the provided options do not match the required schema.
  */
 const ViteFileDetectorPlugin = (instance, options = {}) => {

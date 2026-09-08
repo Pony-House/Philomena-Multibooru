@@ -11,7 +11,7 @@ import { compileGlobRegExp } from 'tiny-essentials/regexp/Glob';
 
 /**
  * A plugin for TinyServiceWorkerEngine that implements runtime caching based on glob patterns.
- * @type {import('../TinyServiceWorkerEngine.mjs').SwPluginInstaller<'1.0.0', [GlobCacheOptions]>}
+ * @type {import('../TinyServiceWorkerEngine.mjs').SwPluginInstaller<'GlobCache', '1.0.0', [GlobCacheOptions]>}
  * @throws {TypeError} If options or patterns are invalid.
  */
 const GlobCachePlugin = (instance, options) => {
