@@ -2,21 +2,6 @@ import { useRef, useState } from 'react';
 import { alert } from 'tiny-essentials/webTemplates/bootstrap/5.3/html/BootstrapDialogs';
 
 /**
- * @template T
- * @typedef {import('react').SetStateAction<T>} SetStateAction
- */
-
-/**
- * @template T
- * @typedef {import('react').Dispatch<T>} Dispatch
- */
-
-/**
- * @template T
- * @typedef {import('react').Ref<T>} Ref
- */
-
-/**
  * @param {Object} config
  * @param {boolean} config.isDark
  */

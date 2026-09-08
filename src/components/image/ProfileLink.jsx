@@ -5,16 +5,6 @@ import { createPortal } from 'react-dom';
 /** @typedef {import('react').MouseEventHandler} MouseEventHandler */
 
 /**
- * @template T
- * @typedef {import('react').SetStateAction<T>} SetStateAction
- */
-
-/**
- * @template T
- * @typedef {import('react').Dispatch<T>} Dispatch
- */
-
-/**
  * @param {{ id: string, icon: string, label: string, url: string, openLeft: boolean, onActionRecord: (id: string, actionType: string) => void, onClose: () => void }} props
  */
 const ContextMenuGroup = ({ id, icon, label, url, openLeft, onActionRecord, onClose }) => {

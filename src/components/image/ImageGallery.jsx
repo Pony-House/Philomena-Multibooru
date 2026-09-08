@@ -4,16 +4,6 @@ import { createPortal } from 'react-dom';
 import { checkLocalFave, toggleLocalFave } from '../../services/api/LocalFaves.js';
 
 /**
- * @template T
- * @typedef {import('react').SetStateAction<T>} SetStateAction
- */
-
-/**
- * @template T
- * @typedef {import('react').Dispatch<T>} Dispatch
- */
-
-/**
  * @typedef {import('../../services/api/Images.js').ImageResult} ImageResult
  * @typedef {import('../../services/api/Images.js').ImageObj} ImageObj
  */

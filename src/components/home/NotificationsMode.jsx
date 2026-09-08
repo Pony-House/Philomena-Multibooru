@@ -4,21 +4,6 @@ import { geString, parseQueryResults } from '../../queries/globalTags.js';
 import { swManager } from '../../tools/utils.js';
 
 /**
- * @template T
- * @typedef {import('react').SetStateAction<T>} SetStateAction
- */
-
-/**
- * @template T
- * @typedef {import('react').Dispatch<T>} Dispatch
- */
-
-/**
- * @template T
- * @typedef {import('react').Ref<T>} Ref
- */
-
-/**
  * @param {{ accounts: import('../../services/api/System.js').Account[], visibleBoorus: string[], onClose: () => void, onGoHome: () => void }} props
  * @returns {import('react').JSX.Element}
  */

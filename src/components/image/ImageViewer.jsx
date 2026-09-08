@@ -26,21 +26,6 @@ import tagsPrefixCssList from '../../queries/tagsPrefixCssList.js';
 import { parseQueryResults } from '../../queries/globalTags.js';
 
 /**
- * @template T
- * @typedef {import('react').SetStateAction<T>} SetStateAction
- */
-
-/**
- * @template T
- * @typedef {import('react').Dispatch<T>} Dispatch
- */
-
-/**
- * @template T
- * @typedef {import('react').Ref<T>} Ref
- */
-
-/**
  * @typedef {import('../../services/api/Images.js').ImageResult} ImageResult
  * @typedef {import('../../services/api/Images.js').CommentData} CommentData
  */

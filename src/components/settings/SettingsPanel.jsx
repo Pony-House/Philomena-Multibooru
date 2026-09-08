@@ -11,16 +11,6 @@ import { Accounts } from './Accounts.jsx';
 import { RecommendationsSettings } from './RecommendationsSettings.jsx';
 
 /**
- * @template T
- * @typedef {import('react').SetStateAction<T>} SetStateAction
- */
-
-/**
- * @template T
- * @typedef {import('react').Dispatch<T>} Dispatch
- */
-
-/**
  * @typedef {import('../../services/api/System.js').Account} Account
  */
 

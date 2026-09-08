@@ -1,16 +1,6 @@
 import { useEffect, useState } from 'react';
 
 /**
- * @template T
- * @typedef {import('react').SetStateAction<T>} SetStateAction
- */
-
-/**
- * @template T
- * @typedef {import('react').Dispatch<T>} Dispatch
- */
-
-/**
  * @param {{ currentPage: number, isHomepage: boolean, totalPages: number, onPageChange: (page: number) => void, className?: string }} props
  */
 export const PaginationBar = ({ currentPage, isHomepage, totalPages, onPageChange, className }) => {

@@ -1,15 +1,5 @@
 import { useState, useEffect } from 'react';
 
-/**
- * @template T
- * @typedef {import('react').SetStateAction<T>} SetStateAction
- */
-
-/**
- * @template T
- * @typedef {import('react').Dispatch<T>} Dispatch
- */
-
 export const RecommendationsSettings = () => {
   /** @type {UseStateTemplate<boolean>} */
   const [enableRecs, setEnableRecs] = useState(() => {

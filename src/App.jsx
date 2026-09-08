@@ -55,21 +55,6 @@ const profileCache = new TinyMapCache();
 if (import.meta.env.DEV) window.TinyMapCache = TinyMapCache;
 const scrollUp = () => window.scrollTo({ top: 0, behavior: 'smooth' });
 
-/**
- * @template T
- * @typedef {import('react').SetStateAction<T>} SetStateAction
- */
-
-/**
- * @template T
- * @typedef {import('react').Dispatch<T>} Dispatch
- */
-
-/**
- * @template T
- * @typedef {import('react').Ref<T>} Ref
- */
-
 const App = () => {
   /** @type {UseStateTemplate<boolean>} */
   const [isReady, setIsReady] = useState(false);

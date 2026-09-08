@@ -8,16 +8,6 @@ import {
 } from '../../services/api/Filters.js';
 
 /**
- * @template T
- * @typedef {import('react').SetStateAction<T>} SetStateAction
- */
-
-/**
- * @template T
- * @typedef {import('react').Dispatch<T>} Dispatch
- */
-
-/**
  * @typedef {import('../../services/api/System.js').Account} Account
  */
 

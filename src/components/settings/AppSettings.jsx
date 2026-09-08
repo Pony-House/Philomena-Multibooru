@@ -9,21 +9,6 @@ import {
 } from '../../services/api/LocalFaves.js';
 
 /**
- * @template T
- * @typedef {import('react').SetStateAction<T>} SetStateAction
- */
-
-/**
- * @template T
- * @typedef {import('react').Dispatch<T>} Dispatch
- */
-
-/**
- * @template T
- * @typedef {import('react').Ref<T>} Ref
- */
-
-/**
  * @param {Object} config
  * @param {boolean} config.isLoading
  * @param {number} config.maxItemsLimit
