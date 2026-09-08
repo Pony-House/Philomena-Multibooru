@@ -1,7 +1,7 @@
 import { segmentExtractorV1 } from 'tiny-essentials/regexp/SegmentExtractor';
 import TinyCloner from 'tiny-essentials/libs/utils/TinyCloner';
 import TinyHttpResponseRegistry from 'tiny-essentials/libs/tools/TinyHttpResponseRegistry';
-import TinyPluginCore from './TinyPluginCore.mjs';
+import { TinyPluginCore, TinyPlugin } from './TinyPlugin.mjs';
 
 const codeIs = TinyHttpResponseRegistry.codeIs;
 
@@ -263,7 +263,7 @@ const getResType = (code) => {
  * @template {string} IdString
  * @template {string} VersionString
  * @template {any[]} Options
- * @typedef {import('./TinyPlugin.mjs').default<TinyServiceWorkerEngine, IdString, VersionString, Options>} TinyServiceWorkerPlugin
+ * @typedef {TinyPlugin<TinyServiceWorkerEngine, IdString, VersionString, Options>} TinyServiceWorkerPlugin
  */
 
 /**
