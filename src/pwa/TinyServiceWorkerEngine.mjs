@@ -1100,7 +1100,7 @@ class TinyServiceWorkerEngine extends TinyPluginCore {
    * @returns {TinyServiceWorkerPlugin<Options>}
    */
   install(plugin, ...options) {
-    return TinyPlugin.install(this, plugin, ...options);
+    return TinyPlugin.addModuleToCore(this, plugin, ...options);
   }
 
   /**

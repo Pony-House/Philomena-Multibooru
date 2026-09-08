@@ -26,7 +26,7 @@ class TinyPlugin {
    * @param {NewOptions} options - Configuration options for the plugin.
    * @returns {TinyPlugin<NewEngine, NewOptions>} - The plugin instance.
    */
-  static install(engine, plugin, ...options) {
+  static addModuleToCore(engine, plugin, ...options) {
     if (!(engine instanceof TinyPluginCore)) throw new Error('');
     const instance = new TinyPlugin({ engine: engine, installer: plugin }, ...options);
     instance.start();
