@@ -2,30 +2,54 @@ import TinyDebugger from 'tiny-essentials/libs/tools/TinyDebugger';
 import TinyVersion from 'tiny-essentials/libs/plugin/TinyVersion';
 
 /**
- * # TINY PLUGIN SYSTEM - DEVELOPER WORKFLOW GUIDE
+ * # TINY PLUGIN SYSTEM - ADVANCED DEVELOPER GUIDE
  *
- * This system provides a structured lifecycle for managing plugins. 
- * Follow these steps to implement it in your project:
+ * This system uses a "Double-Layer Validation" architecture to ensure maximum 
+ * stability and developer experience (DX).
  *
- * 1. CORE INTEGRATION:
- *    - Create your main application class.
- *    - Extend this class from `TinyPluginCore`.
- *    - This grants your class the ability to manage a registry of plugins.
+ * ## 1. CORE ENGINE SETUP (The Host)
+ * - Create your main application class.
+ * - Extend this class from `TinyPluginCore`.
+ * - This enables your class to manage the plugin registry and lifecycle.
  *
- * 2. PLUGIN CREATION:
- *    - Create an isolated JavaScript file for your plugin.
- *    - Export a function that follows the `TinyPluginInstaller` signature.
- *    - Implement your plugin's specific logic inside this installer function.
+ * ## 2. PLUGIN ARCHITECTURE (The Guest) - [CRITICAL]
+ * To ensure full IDE type-safety and runtime stability, follow this strict pattern:
  *
- * 3. PROJECT INTEGRATION:
- *    - In your main application file, import the instance of your `TinyPluginCore` class.
- *    - Import the installer function from your plugin file.
+ * ### A. Define Options (Type Safety)
+ * - Create a `&#64;typedef {Object}` for your plugin's configuration options.
+ * - Define every property and its type explicitly.
  *
- * 4. INITIALIZATION:
- *    - Call the `installPlugin` method on your `TinyPluginCore` instance.
- *    - Pass the plugin (installer function) and any required configuration options.
- *    - The method will handle the entire lifecycle, registering the plugin 
- *      and returning a fully initialized plugin instance ready for use.
+ * ### B. Implement the Installer (The Logic)
+ * - Create an isolated JavaScript file for your plugin.
+ * - Use the generic `Installer` type from your specific Engine to annotate your function.
+ * - **Pattern:** `&#64;type {import('./YourEngine.mjs').YourEngineInstaller<'PluginId', 'Version', [YourOptions]>}`
+ * - This allows the IDE to validate the `options` object when you call `installPlugin`.
+ *
+ * ### C. Runtime Validation (The Safety Net)
+ * - Inside the installer function, you **MUST** manually validate the `options` object.
+ * - Use `throw new TypeError(...)` for every property defined in your `&#64;typedef`.
+ * - This prevents the plugin from entering a "Ready" state if the configuration is invalid.
+ *
+ * ## 3. PROJECT INTEGRATION
+ * - In your main entry point:
+ *   1. Import the instance of your `TinyPluginCore` (Engine).
+ *   2. Import the plugin installer function.
+ *
+ * ## 4. INITIALIZATION
+ * - Invoke `engine.installPlugin(plugin, ...options)`.
+ * - The engine will:
+ *   1. Validate the engine instance.
+ *   2. Execute your installer (triggering your runtime validation).
+ *   3. Register the plugin.
+ *   4. Return a fully initialized, ready-to-use plugin instance.
+ *
+ * @example
+ * // Example of a robust plugin implementation:
+ * // &#64;type {ExamplePluginInstaller<'ExamplePlugin', '1.0.0', [ExampleOptions]>}
+ * const MyPlugin = (instance, options) => {
+ *    if (typeof options.key !== 'string') throw new TypeError('...');
+ *    // ... implementation
+ * };
  */
 
 /**
