@@ -252,14 +252,16 @@ const getResType = (code) => {
 
 /**
  * A function used to install a plugin into the engine.
+ * @template {string} VersionString
  * @template {any[]} Options
- * @typedef {import('./TinyPlugin.mjs').TinyPluginInstaller<TinyServiceWorkerEngine, Options>} SwPluginInstaller
+ * @typedef {import('./TinyPlugin.mjs').TinyPluginInstaller<TinyServiceWorkerEngine, VersionString, Options>} SwPluginInstaller
  */
 
 /**
  * Represents a plugin instance designed to be integrated into a TinyServiceWorkerEngine.
+ * @template {string} VersionString
  * @template {any[]} Options
- * @typedef {import('./TinyPlugin.mjs').default<TinyServiceWorkerEngine, Options>} TinyServiceWorkerPlugin
+ * @typedef {import('./TinyPlugin.mjs').default<TinyServiceWorkerEngine, VersionString, Options>} TinyServiceWorkerPlugin
  */
 
 /**

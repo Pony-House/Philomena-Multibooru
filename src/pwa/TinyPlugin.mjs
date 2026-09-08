@@ -3,9 +3,10 @@ import TinyPluginCore from './TinyPluginCore.mjs';
 
 /**
  * A function used to install a plugin into the engine.
- * @template {TinyPluginCore<any, Options>} Engine
+ * @template {TinyPluginCore<any, VersionString, Options>} Engine
+ * @template {string} VersionString
  * @template {any[]} Options
- * @typedef { (plugin: TinyPlugin<Engine, Options>, ...options: Options) => void } TinyPluginInstaller
+ * @typedef { (plugin: TinyPlugin<Engine, VersionString, Options>, ...options: Options) => void } TinyPluginInstaller
  */
 
 /**
@@ -13,21 +14,24 @@ import TinyPluginCore from './TinyPluginCore.mjs';
  * It encapsulates the plugin's identity (id and version), its connection to the engine,
  * the installation logic, and any associated configuration options.
  *
- * @template {TinyPluginCore<any, Options>} Engine
+ * @template {TinyPluginCore<any, VersionString, Options>} Engine
+ * @template {string} VersionString
  * @template {any[]} Options
  */
 class TinyPlugin {
   /**
    * Installs a new plugin into a engine and starts its lifecycle.
-   * @template {TinyPluginCore<any, ExternalOptions>} ExternalEngine
+   * @template {TinyPluginCore<any, ExternalVersionString, ExternalOptions>} ExternalEngine
+   * @template {string} ExternalVersionString
    * @template {any[]} ExternalOptions
    * @param {ExternalEngine} engine - The main instance connected to plugin.
-   * @param {TinyPluginInstaller<ExternalEngine, ExternalOptions>} plugin - The plugin instance to be registered.
+   * @param {TinyPluginInstaller<ExternalEngine, ExternalVersionString, ExternalOptions>} plugin - The plugin instance to be registered.
    * @param {ExternalOptions} options - Configuration options for the plugin.
-   * @returns {TinyPlugin<ExternalEngine, ExternalOptions>} - The plugin instance.
+   * @returns {TinyPlugin<ExternalEngine, ExternalVersionString, ExternalOptions>} - The plugin instance.
    */
   static addModuleToCore(engine, plugin, ...options) {
     if (!(engine instanceof TinyPluginCore)) throw new Error('');
+    /** @type {TinyPlugin<ExternalEngine, ExternalVersionString, ExternalOptions>} */
     const instance = new TinyPlugin({ engine: engine, installer: plugin }, ...options);
     instance.start();
     if (engine.hasPlugin(instance))
@@ -38,11 +42,11 @@ class TinyPlugin {
 
   /** @type {string} The unique id of the plugin. */
   #id = '';
-  /** @type {TinyVersion|null} The version string of the plugin. */
+  /** @type {TinyVersion<VersionString>|null} The version string of the plugin. */
   #version = null;
   /** @type {Engine} The engine instance this plugin is attached to. */
   #engine;
-  /** @type {TinyPluginInstaller<Engine, Options>} The installer function used to initialize the plugin. */
+  /** @type {TinyPluginInstaller<Engine, VersionString, Options>} The installer function used to initialize the plugin. */
   #installer;
   /** @type {Options} An array of configuration options provided to the plugin. */
   #options;
@@ -109,7 +113,7 @@ class TinyPlugin {
 
   /**
    * Sets the version of the plugin.
-   * @param {string} value - The new version string.
+   * @param {VersionString} value - The new version string.
    * @throws {Error} If the version is already set.
    * @throws {TypeError} If the value is not a string or is empty.
    */
@@ -123,7 +127,7 @@ class TinyPlugin {
 
   /**
    * Retrieves the current version of the plugin as a TinyVersion instance.
-   * @returns {TinyVersion<string>} The TinyVersion instance representing the plugin's version.
+   * @returns {TinyVersion<VersionString>} The TinyVersion instance representing the plugin's version.
    */
   get tinyVersion() {
     if (!this.#version) throw new Error('Plugin version is not set.');
@@ -151,7 +155,7 @@ class TinyPlugin {
    * Initializes a new instance of TinyPlugin.
    * @param {Object} config - The configuration object.
    * @param {Engine} config.engine - The engine instance.
-   * @param {TinyPluginInstaller<Engine, Options>} config.installer - The installer function.
+   * @param {TinyPluginInstaller<Engine, VersionString, Options>} config.installer - The installer function.
    * @param {Options} ops - Additional configuration options.
    */
   constructor({ engine, installer }, ...ops) {
