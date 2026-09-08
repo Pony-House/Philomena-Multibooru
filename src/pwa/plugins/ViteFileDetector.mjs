@@ -26,6 +26,9 @@ const ViteFileDetectorPlugin = (instance, options = {}) => {
   const engine = instance.engine;
   instance.id = 'ViteFileDetector';
   instance.version = '1.0.0';
+  instance.description = 'Vite File detector.';
+  instance.authors = ['JasminDreasond'];
+  instance.contributors = ['JasminDreasond'];
 
   // 1. Merge and Validate Options
   /** @type {ViteFileDetectorOptions} */

@@ -145,7 +145,7 @@ class TinyPlugin {
 
   /**
    * Sets the authors of the plugin.
-   * @param {IdString} value - The new authors list for the plugin.
+   * @param {string[]} value - The new authors list for the plugin.
    * @throws {Error} If the authors is already set.
    * @throws {TypeError} If the value is not a array of strings or is empty.
    */
@@ -171,7 +171,7 @@ class TinyPlugin {
 
   /**
    * Sets the contributors of the plugin.
-   * @param {IdString} value - The new contributors list for the plugin.
+   * @param {string[]} value - The new contributors list for the plugin.
    * @throws {Error} If the contributors is already set.
    * @throws {TypeError} If the value is not a array of strings or is empty.
    */

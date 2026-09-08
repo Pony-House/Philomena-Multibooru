@@ -18,6 +18,9 @@ const GlobCachePlugin = (instance, options) => {
   const engine = instance.engine;
   instance.id = 'GlobCache';
   instance.version = '1.0.0';
+  instance.description = 'The glob cache manager.';
+  instance.authors = ['JasminDreasond'];
+  instance.contributors = ['JasminDreasond'];
 
   // 1. Validation
   if (!isJsonObject(options)) {
