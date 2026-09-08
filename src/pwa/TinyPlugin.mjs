@@ -9,15 +9,15 @@
 
 /**
  * Represents a plugin instance designed to be integrated into a main engine.
- * It encapsulates the plugin's identity (name and version), its connection to the engine,
+ * It encapsulates the plugin's identity (id and version), its connection to the engine,
  * the installation logic, and any associated configuration options.
  *
  * @template {any} Engine
  * @template {any[]} Options
  */
 class TinyPlugin {
-  /** @type {string} The unique name of the plugin. */
-  #name = '';
+  /** @type {string} The unique id of the plugin. */
+  #id = '';
   /** @type {string} The version string of the plugin. */
   #version = '';
   /** @type {Engine} The engine instance this plugin is attached to. */
@@ -38,11 +38,24 @@ class TinyPlugin {
   }
 
   /**
-   * Gets the name of the plugin.
-   * @returns {string} The plugin name.
+   * Gets the id of the plugin.
+   * @returns {string} The plugin id.
    */
-  get name() {
-    return this.#name;
+  get id() {
+    return this.#id;
+  }
+
+    /**
+   * Sets the id of the plugin.
+   * @param {string} value - The new id for the plugin.
+   * @throws {Error} If the id is already set.
+   * @throws {TypeError} If the value is not a string or is empty.
+   */
+  set id(value) {
+    if (this.#id.length !== 0) throw new Error('Id is already set.');
+    if (typeof value !== 'string') throw new TypeError('Id must be a string.');
+    if (value.length === 0) throw new TypeError('Id cannot be empty.');
+    this.#id = value;
   }
 
   /**
@@ -51,6 +64,19 @@ class TinyPlugin {
    */
   get version() {
     return this.#version;
+  }
+
+  /**
+   * Sets the version of the plugin.
+   * @param {string} value - The new version string.
+   * @throws {Error} If the version is already set.
+   * @throws {TypeError} If the value is not a string or is empty.
+   */
+  set version(value) {
+    if (this.#version.length !== 0) throw new Error('Version is already set.');
+    if (typeof value !== 'string') throw new TypeError('Version must be a string.');
+    if (value.length === 0) throw new TypeError('Version cannot be empty.');
+    this.#version = value;
   }
 
   /**
@@ -70,32 +96,6 @@ class TinyPlugin {
   }
 
   /**
-   * Sets the name of the plugin.
-   * @param {string} value - The new name for the plugin.
-   * @throws {Error} If the name is already set.
-   * @throws {TypeError} If the value is not a string or is empty.
-   */
-  setName(value) {
-    if (this.#name.length !== 0) throw new Error('Name is already set.');
-    if (typeof value !== 'string') throw new TypeError('Name must be a string.');
-    if (value.length === 0) throw new TypeError('Name cannot be empty.');
-    this.#name = value;
-  }
-
-  /**
-   * Sets the version of the plugin.
-   * @param {string} value - The new version string.
-   * @throws {Error} If the version is already set.
-   * @throws {TypeError} If the value is not a string or is empty.
-   */
-  setVersion(value) {
-    if (this.#version.length !== 0) throw new Error('Version is already set.');
-    if (typeof value !== 'string') throw new TypeError('Version must be a string.');
-    if (value.length === 0) throw new TypeError('Version cannot be empty.');
-    this.#version = value;
-  }
-
-  /**
    * Initializes a new instance of TinyPlugin.
    * @param {Object} config - The configuration object.
    * @param {Engine} config.engine - The engine instance.
@@ -110,12 +110,12 @@ class TinyPlugin {
 
   /**
    * Starts the plugin lifecycle by calling the installer.
-   * @throws {Error} If name or version are not set.
+   * @throws {Error} If id or version are not set.
    */
   start() {
     if (this.#isReady) throw new Error('Plugin is already ready.');
     this.#installer(this, ...this.#options);
-    if (this.#name.length === 0) throw new Error('Plugin name is not set.');
+    if (this.#id.length === 0) throw new Error('Plugin id is not set.');
     if (this.#version.length === 0) throw new Error('Plugin version is not set.');
   }
 }

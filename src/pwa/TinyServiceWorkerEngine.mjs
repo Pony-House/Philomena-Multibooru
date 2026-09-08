@@ -1115,11 +1115,11 @@ class TinyServiceWorkerEngine extends TinyDebugger {
     const instance = new TinyPlugin({ engine: this, installer: plugin }, ...options);
     try {
       instance.start();
-      if (this.#plugins.has(instance.name))
-        throw new Error(`A plugin with the name "${instance.name}" is already registered.`);
-      this.#plugins.set(instance.name, instance);
+      if (this.#plugins.has(instance.id))
+        throw new Error(`A plugin with the name "${instance.id}" is already registered.`);
+      this.#plugins.set(instance.id, instance);
     } catch (err) {
-      const name = instance.name ?? 'Unknown Plugin';
+      const name = instance.id ?? 'Unknown Plugin';
       const version = instance.version ?? '';
       this.log(
         'warn',

@@ -24,8 +24,8 @@ const DEFAULT_OPTIONS = {
  */
 const ViteFileDetectorPlugin = (instance, options = {}) => {
   const engine = instance.engine;
-  instance.setName('ViteFileDetector');
-  instance.setVersion('1.0.0');
+  instance.id = 'ViteFileDetector';
+  instance.version = '1.0.0';
 
   // 1. Merge and Validate Options
   /** @type {ViteFileDetectorOptions} */

@@ -16,8 +16,8 @@ import { compileGlobRegExp } from 'tiny-essentials/regexp/Glob';
  */
 const GlobCachePlugin = (instance, options) => {
   const engine = instance.engine;
-  instance.setName('GlobCache');
-  instance.setVersion('1.0.0');
+  instance.id = 'GlobCache';
+  instance.version = '1.0.0';
 
   // 1. Validation
   if (!isJsonObject(options)) {

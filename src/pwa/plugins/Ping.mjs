@@ -5,8 +5,8 @@
  */
 const TinyPingPwa = (instance) => {
   const engine = instance.engine;
-  instance.setName('SimplePing');
-  instance.setVersion('1.0.0');
+  instance.id = 'SimplePing';
+  instance.version = '1.0.0';
 
   engine.addMessageListener('ping', ({ reply }) => {
     reply('pong', { msg: 'mio! :3' });
