@@ -400,6 +400,25 @@ class TinyServiceWorkerEngine extends TinyDebugger {
   #plugins = new Map();
 
   /**
+   * Registers a plugin instance into the engine's internal plugin registry.
+   *
+   * @param {TinyServiceWorkerPlugin<any>} plugin - The plugin instance to be registered.
+   */
+  _addPlugin(plugin) {
+    this.#plugins.set(plugin.id, plugin);
+  }
+
+  /**
+   * Checks if a specific plugin is already registered in the engine's internal registry.
+   *
+   * @param {TinyServiceWorkerPlugin<any>} plugin - The plugin instance to check.
+   * @returns {boolean} True if the plugin is registered, false otherwise.
+   */
+  _hasPlugin(plugin) {
+    return this.#plugins.has(plugin.id);
+  }
+
+  /**
    * Returns a plain object representation of the registered plugins.
    * This converts the internal Map into a standard object, providing a snapshot
    * of the plugins for easier external access.
@@ -1110,23 +1129,10 @@ class TinyServiceWorkerEngine extends TinyDebugger {
    * @template {any[]} Options
    * @param {SwPluginInstaller<Options>} plugin - The plugin instance to be registered.
    * @param {Options} options - Configuration options for the plugin.
+   * @returns {TinyServiceWorkerPlugin<Options>}
    */
   install(plugin, ...options) {
-    const instance = new TinyPlugin({ engine: this, installer: plugin }, ...options);
-    try {
-      instance.start();
-      if (this.#plugins.has(instance.id))
-        throw new Error(`A plugin with the name "${instance.id}" is already registered.`);
-      this.#plugins.set(instance.id, instance);
-    } catch (err) {
-      const name = instance.id ?? 'Unknown Plugin';
-      const version = instance.version ?? '';
-      this.log(
-        'warn',
-        `Failed to register an plugin: ${name}: Version ${version ? ` ${version}` : ''}`,
-      );
-      throw err;
-    }
+    return TinyPlugin.install(this, plugin, ...options);
   }
 
   /**

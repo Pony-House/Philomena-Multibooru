@@ -1,3 +1,4 @@
+import { isAnyClassInstance } from 'tiny-essentials/basics/objChecker';
 import TinyVersion from 'tiny-essentials/libs/plugin/TinyVersion';
 
 /**
@@ -16,6 +17,34 @@ import TinyVersion from 'tiny-essentials/libs/plugin/TinyVersion';
  * @template {any[]} Options
  */
 class TinyPlugin {
+  /**
+   * Installs a new plugin into a engine and starts its lifecycle.
+   * @template {any} NewEngine
+   * @template {any[]} NewOptions
+   * @param {NewEngine} engine - The main instance connected to plugin.
+   * @param {TinyPluginInstaller<NewEngine, NewOptions>} plugin - The plugin instance to be registered.
+   * @param {NewOptions} options - Configuration options for the plugin.
+   * @returns {TinyPlugin<NewEngine, NewOptions>} - The plugin instance.
+   */
+  static install(engine, plugin, ...options) {
+    if (
+      !isAnyClassInstance(engine) ||
+      // @ts-ignore
+      typeof engine._addPlugin !== 'function' ||
+      // @ts-ignore
+      typeof engine._hasPlugin !== 'function'
+    )
+      throw new Error();
+    const instance = new TinyPlugin({ engine: engine, installer: plugin }, ...options);
+    instance.start();
+    // @ts-ignore
+    if (engine._hasPlugin(instance))
+      throw new Error(`A plugin with the name "${instance.id}" is already registered.`);
+    // @ts-ignore
+    engine._addPlugin(instance);
+    return instance;
+  }
+
   /** @type {string} The unique id of the plugin. */
   #id = '';
   /** @type {TinyVersion|null} The version string of the plugin. */
