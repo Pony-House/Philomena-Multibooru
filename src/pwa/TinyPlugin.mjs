@@ -23,7 +23,16 @@ class TinyPluginCore extends TinyDebugger {
   }
 
   /**
-   * @param {DebuggerConstructor} ops
+   * Gets the total number of registered plugins in the engine.
+   * @returns {number} The number of plugins.
+   */
+  get pluginsSize() {
+    return this.#plugins.size;
+  }
+
+  /**
+   * Initializes a new instance of the TinyPluginCore class.
+   * @param {DebuggerConstructor} ops - The configuration options for the debugger base class.
    */
   constructor(ops) {
     super(ops);
@@ -45,7 +54,7 @@ class TinyPluginCore extends TinyDebugger {
    * @template {any[]} Options
    * @param {TinyPluginInstaller<this, Id, Version, Options>} plugin - The plugin instance to be registered.
    * @param {Options} options - Configuration options for the plugin.
-   * @returns {TinyPlugin<this, Id, Version, Options>}
+   * @returns {TinyPlugin<this, Id, Version, Options>} The newly installed plugin instance.
    */
   installPlugin(plugin, ...options) {
     return TinyPlugin.addModuleToCore(this, plugin, ...options);
@@ -62,8 +71,9 @@ class TinyPluginCore extends TinyDebugger {
   }
 
   /**
-   * @param {string} key
-   * @returns {TinyPlugin<Engine, string, string, any[]>|undefined}
+   * Retrieves a plugin instance by its unique identifier.
+   * @param {string} key - The unique identifier of the plugin to retrieve.
+   * @returns {TinyPlugin<Engine, string, string, any[]>|undefined} The plugin instance if found, otherwise undefined.
    */
   getPlugin(key) {
     return this.#plugins.get(key);
@@ -115,11 +125,11 @@ class TinyPlugin {
   /** @type {IdString} The unique id of the plugin. */
   // @ts-ignore
   #id = '';
-  /** @type {string} */
+  /** @type {string} The description of the plugin. */
   #description = '';
-  /** @type {string[]} */
+  /** @type {string[]} The list of authors of the plugin. */
   #authors = [];
-  /** @type {string[]} */
+  /** @type {string[]} The list of contributors to the plugin. */
   #contributors = [];
   /** @type {TinyVersion<VersionString>|null} The version string of the plugin. */
   #version = null;
@@ -132,18 +142,33 @@ class TinyPlugin {
   /** @type {boolean} Indicates whether the plugin has already been started and is ready. */
   #isReady = false;
 
+  /**
+   * Gets the plugins object from the engine.
+   * @returns {Record<string, TinyPlugin<Engine, string, string, any[]>>} The plugins object from the engine.
+   */
   get plugins() {
     return this.#engine.plugins;
   }
 
   /**
-   * @param {string} id
+   * Gets the total number of plugins in the engine.
+   * @returns {number} The number of plugins.
+   */
+  get pluginsSize() {
+    return this.#engine.pluginsSize;
+  }
+
+  /**
+   * Retrieves the plugin instance associated with the given ID from the engine.
+   * @param {string} id - The unique identifier of the plugin.
+   * @returns {TinyPlugin<Engine, any>|undefined} The plugin instance if found, otherwise undefined.
    */
   getPlugin(id) {
     return this.#engine.getPlugin(id);
   }
 
   /**
+   * Checks if the specified plugin or ID is registered in the engine.
    * @param {TinyPlugin<Engine, any>|string} plugin - The plugin instance to check.
    * @returns {boolean} True if the plugin is registered, false otherwise.
    */
@@ -160,7 +185,7 @@ class TinyPlugin {
   }
 
   /**
-   * Gets the id of the plugin.
+   * Gets the unique identifier of the plugin.
    * @returns {IdString} The plugin id.
    */
   get id() {
@@ -169,7 +194,7 @@ class TinyPlugin {
   }
 
   /**
-   * Sets the id of the plugin.
+   * Sets the unique identifier for the plugin.
    * @param {IdString} value - The new id for the plugin.
    * @throws {Error} If the id is already set.
    * @throws {TypeError} If the value is not a string or is empty.
@@ -191,7 +216,7 @@ class TinyPlugin {
   }
 
   /**
-   * Sets the description of the plugin.
+   * Sets the description for the plugin.
    * @param {string} value - The new description for the plugin.
    * @throws {Error} If the description is already set.
    * @throws {TypeError} If the value is not a string or is empty.
@@ -204,7 +229,7 @@ class TinyPlugin {
   }
 
   /**
-   * Gets the authors of the plugin.
+   * Gets the list of authors for the plugin.
    * @returns {readonly string[]} The plugin authors.
    */
   get authors() {
@@ -213,7 +238,7 @@ class TinyPlugin {
   }
 
   /**
-   * Sets the authors of the plugin.
+   * Sets the list of authors for the plugin.
    * @param {string[]} value - The new authors list for the plugin.
    * @throws {Error} If the authors is already set.
    * @throws {TypeError} If the value is not a array of strings or is empty.
@@ -230,7 +255,7 @@ class TinyPlugin {
   }
 
   /**
-   * Gets the contributors of the plugin.
+   * Gets the list of contributors for the plugin.
    * @returns {readonly string[]} The plugin contributors.
    */
   get contributors() {
@@ -239,7 +264,7 @@ class TinyPlugin {
   }
 
   /**
-   * Sets the contributors of the plugin.
+   * Sets the list of contributors for the plugin.
    * @param {string[]} value - The new contributors list for the plugin.
    * @throws {Error} If the contributors is already set.
    * @throws {TypeError} If the value is not a array of strings or is empty.
@@ -256,7 +281,7 @@ class TinyPlugin {
   }
 
   /**
-   * Gets the version of the plugin.
+   * Gets the version of the plugin as a string.
    * @returns {string} The plugin version.
    */
   get version() {
