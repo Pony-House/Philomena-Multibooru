@@ -19,12 +19,12 @@ import TinyPluginCore from './TinyPluginCore.mjs';
 class TinyPlugin {
   /**
    * Installs a new plugin into a engine and starts its lifecycle.
-   * @template {TinyPluginCore<any, NewOptions>} NewEngine
-   * @template {any[]} NewOptions
-   * @param {NewEngine} engine - The main instance connected to plugin.
-   * @param {TinyPluginInstaller<NewEngine, NewOptions>} plugin - The plugin instance to be registered.
-   * @param {NewOptions} options - Configuration options for the plugin.
-   * @returns {TinyPlugin<NewEngine, NewOptions>} - The plugin instance.
+   * @template {TinyPluginCore<any, ExternalOptions>} ExternalEngine
+   * @template {any[]} ExternalOptions
+   * @param {ExternalEngine} engine - The main instance connected to plugin.
+   * @param {TinyPluginInstaller<ExternalEngine, ExternalOptions>} plugin - The plugin instance to be registered.
+   * @param {ExternalOptions} options - Configuration options for the plugin.
+   * @returns {TinyPlugin<ExternalEngine, ExternalOptions>} - The plugin instance.
    */
   static addModuleToCore(engine, plugin, ...options) {
     if (!(engine instanceof TinyPluginCore)) throw new Error('');

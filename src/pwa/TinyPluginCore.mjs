@@ -1,13 +1,15 @@
 import TinyDebugger from 'tiny-essentials/libs/tools/TinyDebugger';
+import TinyPlugin from './TinyPlugin.mjs';
 
 /**
  * @typedef {import('tiny-essentials/libs/tools/TinyDebugger').DebuggerConstructor} DebuggerConstructor
  */
 
 /**
+ * A function used to install a plugin into the engine.
  * @template {TinyPluginCore<any, Options>} Engine
  * @template {any[]} Options
- * @typedef {import('./TinyPlugin.mjs').default<Engine, Options>} TinyPlugin
+ * @typedef {import('./TinyPlugin.mjs').TinyPluginInstaller<Engine, Options>} TinyPluginInstaller
  */
 
 /**
@@ -20,6 +22,16 @@ class TinyPluginCore extends TinyDebugger {
    */
   constructor(ops) {
     super(ops);
+  }
+
+  /**
+   * Installs a new plugin into the engine and starts its lifecycle.
+   * @param {TinyPluginInstaller<this, Options>} plugin - The plugin instance to be registered.
+   * @param {Options} options - Configuration options for the plugin.
+   * @returns {TinyPlugin<this, Options>}
+   */
+  installPlugin(plugin, ...options) {
+    return TinyPlugin.addModuleToCore(this, plugin, ...options);
   }
 
   /** @type {Map<string, TinyPlugin<Engine, Options>>} A map of registered plugins. */

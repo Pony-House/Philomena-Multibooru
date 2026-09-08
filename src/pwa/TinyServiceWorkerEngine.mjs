@@ -2,7 +2,6 @@ import { segmentExtractorV1 } from 'tiny-essentials/regexp/SegmentExtractor';
 import TinyCloner from 'tiny-essentials/libs/utils/TinyCloner';
 import TinyHttpResponseRegistry from 'tiny-essentials/libs/tools/TinyHttpResponseRegistry';
 import TinyPluginCore from './TinyPluginCore.mjs';
-import TinyPlugin from './TinyPlugin.mjs';
 
 const codeIs = TinyHttpResponseRegistry.codeIs;
 
@@ -1090,17 +1089,6 @@ class TinyServiceWorkerEngine extends TinyPluginCore {
     }
     // Merge and then deep clone the result to ensure the internal state is isolated
     this.#globalMsgCode = TinyCloner.clone({ ...this.#globalMsgCode, ...newConfig });
-  }
-
-  /**
-   * Installs a new plugin into the engine and starts its lifecycle.
-   * @template {any[]} Options
-   * @param {SwPluginInstaller<Options>} plugin - The plugin instance to be registered.
-   * @param {Options} options - Configuration options for the plugin.
-   * @returns {TinyServiceWorkerPlugin<Options>}
-   */
-  install(plugin, ...options) {
-    return TinyPlugin.addModuleToCore(this, plugin, ...options);
   }
 
   /**
