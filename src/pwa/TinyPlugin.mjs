@@ -6,6 +6,9 @@ import TinyVersion from 'tiny-essentials/libs/plugin/TinyVersion';
  */
 
 /**
+ * The core engine class responsible for managing the plugin lifecycle and registry.
+ * It extends TinyDebugger to provide debugging capabilities alongside plugin management.
+ *
  * @template {TinyPluginCore<any, string, string, any[]>} Engine
  */
 class TinyPluginCore extends TinyDebugger {
