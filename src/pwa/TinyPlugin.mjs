@@ -27,7 +27,7 @@ import TinyVersion from 'tiny-essentials/libs/plugin/TinyVersion';
  *
  * ### C. Runtime Validation (The Safety Net)
  * - Inside the installer function, you **MUST** manually validate the `options` object.
- * - Use `throw new TypeError(...)` for every property defined in your `@typedef`.
+ * - Use `throw new TypeError(...)` for every property defined in your `&#64;typedef`.
  * - This prevents the plugin from entering a "Ready" state if the configuration is invalid.
  *
  * ## 3. [CRITICAL] ARCHITECTURAL INTEGRITY
