@@ -27,15 +27,20 @@ import TinyVersion from 'tiny-essentials/libs/plugin/TinyVersion';
  *
  * ### C. Runtime Validation (The Safety Net)
  * - Inside the installer function, you **MUST** manually validate the `options` object.
- * - Use `throw new TypeError(...)` for every property defined in your `&#64;typedef`.
+ * - Use `throw new TypeError(...)` for every property defined in your `@typedef`.
  * - This prevents the plugin from entering a "Ready" state if the configuration is invalid.
  *
- * ## 3. PROJECT INTEGRATION
+ * ## 3. [CRITICAL] ARCHITECTURAL INTEGRITY
+ * - **NO MUTATION:** Never attempt to manually inject, add, or modify properties or methods on the `instance` (`TinyPlugin`) or the `engine` (`TinyPluginCore`) inside the installer function.
+ * - **THE EXTENSION PATTERN (@extended):** If your plugin requires custom methods or properties on the engine, you **must** first create a custom class that extends `TinyPluginCore`. Once your custom subclass is defined, use it as the `Engine` type reference in your plugin's JSDoc. 
+ * - *Rule:* Expand the core via inheritance **before** implementing the plugin logic.
+ *
+ * ## 4. PROJECT INTEGRATION
  * - In your main entry point:
  *   1. Import the instance of your `TinyPluginCore` (Engine).
  *   2. Import the plugin installer function.
  *
- * ## 4. INITIALIZATION
+ * ## 5. INITIALIZATION
  * - Invoke `engine.installPlugin(plugin, ...options)`.
  * - The engine will:
  *   1. Validate the engine instance.
