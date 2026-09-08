@@ -30,9 +30,9 @@ class TinyPlugin {
     if (!(engine instanceof TinyPluginCore)) throw new Error('');
     const instance = new TinyPlugin({ engine: engine, installer: plugin }, ...options);
     instance.start();
-    if (engine._hasPlugin(instance))
+    if (engine.hasPlugin(instance))
       throw new Error(`A plugin with the name "${instance.id}" is already registered.`);
-    engine._addPlugin(instance);
+    engine.addPlugin(instance);
     return instance;
   }
 
@@ -50,14 +50,14 @@ class TinyPlugin {
   #isReady = false;
 
   get plugins() {
-    return this.#engine._getAllPlugins();
+    return this.#engine.plugins;
   }
 
   /**
    * @param {string} id
    */
   getPlugin(id) {
-    return this.#engine._getPlugin(id);
+    return this.#engine.getPlugin(id);
   }
 
   /**
@@ -65,7 +65,7 @@ class TinyPlugin {
    * @returns {boolean} True if the plugin is registered, false otherwise.
    */
   hasPlugin(plugin) {
-    return this.#engine._hasPlugin(plugin);
+    return this.#engine.hasPlugin(plugin);
   }
 
   /**
