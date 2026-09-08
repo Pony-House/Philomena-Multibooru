@@ -47,7 +47,7 @@ class TinyPluginCore extends TinyDebugger {
    *
    * @param {TinyPlugin<Engine, string, string, any[]>} plugin - The plugin instance to be registered.
    */
-  addPlugin(plugin) {
+  _addPlugin(plugin) {
     this.#plugins.set(plugin.id, plugin);
   }
 
@@ -108,7 +108,7 @@ class TinyPlugin {
     instance.start();
     if (engine.hasPlugin(instance))
       throw new Error(`A plugin with the name "${instance.id}" is already registered.`);
-    engine.addPlugin(instance);
+    engine._addPlugin(instance);
     return instance;
   }
 
