@@ -64,18 +64,16 @@ import TinyVersion from 'tiny-essentials/libs/plugin/TinyVersion';
 /**
  * The core engine class responsible for managing the plugin lifecycle and registry.
  * It extends TinyDebugger to provide debugging capabilities alongside plugin management.
- *
- * @template {TinyPluginCore<any, string, string, any[]>} Engine
  */
 class TinyPluginCore extends TinyDebugger {
-  /** @type {Map<string, TinyPlugin<Engine, string, string, any[]>>} A map of registered plugins. */
+  /** @type {Map<string, TinyPlugin<this, string, string, any[]>>} A map of registered plugins. */
   #plugins = new Map();
 
   /**
    * Returns a plain object representation of the registered plugins.
    * This converts the internal Map into a standard object, providing a snapshot
    * of the plugins for easier external access.
-   * @returns {Record<string, TinyPlugin<Engine, string, string, any[]>>} An object where keys are plugin names and values are the plugin instances.
+   * @returns {Record<string, TinyPlugin<this, string, string, any[]>>} An object where keys are plugin names and values are the plugin instances.
    */
   get plugins() {
     return Object.fromEntries(this.#plugins);
@@ -100,7 +98,7 @@ class TinyPluginCore extends TinyDebugger {
   /**
    * Registers a plugin instance into the engine's internal plugin registry.
    *
-   * @param {TinyPlugin<Engine, string, string, any[]>} plugin - The plugin instance to be registered.
+   * @param {TinyPlugin<this, string, string, any[]>} plugin - The plugin instance to be registered.
    */
   _addPlugin(plugin) {
     this.#plugins.set(plugin.id, plugin);
@@ -122,7 +120,7 @@ class TinyPluginCore extends TinyDebugger {
   /**
    * Checks if a specific plugin is already registered in the engine's internal registry.
    *
-   * @param {TinyPlugin<Engine, string, string, any[]>|string} plugin - The plugin instance to check.
+   * @param {TinyPlugin<this, string, string, any[]>|string} plugin - The plugin instance to check.
    * @returns {boolean} True if the plugin is registered, false otherwise.
    */
   hasPlugin(plugin) {
@@ -132,7 +130,7 @@ class TinyPluginCore extends TinyDebugger {
   /**
    * Retrieves a plugin instance by its unique identifier.
    * @param {string} key - The unique identifier of the plugin to retrieve.
-   * @returns {TinyPlugin<Engine, string, string, any[]>|undefined} The plugin instance if found, otherwise undefined.
+   * @returns {TinyPlugin<this, string, string, any[]>|undefined} The plugin instance if found, otherwise undefined.
    */
   getPlugin(key) {
     return this.#plugins.get(key);
@@ -141,7 +139,7 @@ class TinyPluginCore extends TinyDebugger {
 
 /**
  * A function used to install a plugin into the engine.
- * @template {TinyPluginCore<any, IdString, VersionString, Options>} Engine
+ * @template {TinyPluginCore} Engine
  * @template {string} IdString
  * @template {string} VersionString
  * @template {any[]} Options
@@ -153,7 +151,7 @@ class TinyPluginCore extends TinyDebugger {
  * It encapsulates the plugin's identity (id and version), its connection to the engine,
  * the installation logic, and any associated configuration options.
  *
- * @template {TinyPluginCore<any, IdString, VersionString, Options>} Engine
+ * @template {TinyPluginCore} Engine
  * @template {string} IdString
  * @template {string} VersionString
  * @template {any[]} Options
@@ -161,7 +159,7 @@ class TinyPluginCore extends TinyDebugger {
 class TinyPlugin {
   /**
    * Installs a new plugin into a engine and starts its lifecycle.
-   * @template {TinyPluginCore<any, ExternalIdString, ExternalVersionString, ExternalOptions>} ExternalEngine
+   * @template {TinyPluginCore} ExternalEngine
    * @template {string} ExternalIdString
    * @template {string} ExternalVersionString
    * @template {any[]} ExternalOptions
@@ -175,8 +173,10 @@ class TinyPlugin {
     /** @type {TinyPlugin<ExternalEngine, ExternalIdString, ExternalVersionString, ExternalOptions>} */
     const instance = new TinyPlugin({ engine: engine, installer: plugin }, ...options);
     instance.start();
+    // @ts-ignore
     if (engine.hasPlugin(instance))
       throw new Error(`A plugin with the name "${instance.id}" is already registered.`);
+    // @ts-ignore
     engine._addPlugin(instance);
     return instance;
   }
@@ -220,7 +220,7 @@ class TinyPlugin {
   /**
    * Retrieves the plugin instance associated with the given ID from the engine.
    * @param {string} id - The unique identifier of the plugin.
-   * @returns {TinyPlugin<Engine, any>|undefined} The plugin instance if found, otherwise undefined.
+   * @returns {TinyPlugin<Engine, string, string, any[]>|undefined} The plugin instance if found, otherwise undefined.
    */
   getPlugin(id) {
     return this.#engine.getPlugin(id);
@@ -228,7 +228,7 @@ class TinyPlugin {
 
   /**
    * Checks if the specified plugin or ID is registered in the engine.
-   * @param {TinyPlugin<Engine, any>|string} plugin - The plugin instance to check.
+   * @param {TinyPlugin<Engine, string, string, any[]>|string} plugin - The plugin instance to check.
    * @returns {boolean} True if the plugin is registered, false otherwise.
    */
   hasPlugin(plugin) {
