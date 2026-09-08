@@ -4,6 +4,10 @@ import ViteFileDetectorPlugin from './plugins/ViteFileDetector.mjs';
 
 const { isNavigate } = TinyServiceWorkerEngine;
 
+/** @type {ServiceWorkerGlobalScope} */
+// @ts-ignore
+export const sw = self;
+
 /** @type {Partial<import('./TinyServiceWorkerEngine.mjs').PartialServiceWorkerSettings>} */
 const MY_CONFIG = { fetch: { router: { enabled: true } } };
 export const tinySw = new TinyServiceWorkerEngine(MY_CONFIG, {

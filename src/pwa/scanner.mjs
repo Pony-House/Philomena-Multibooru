@@ -1,8 +1,4 @@
-import { tinySw } from './config.mjs';
-
-/** @type {ServiceWorkerGlobalScope} */
-// @ts-ignore
-const sw = self;
+import { sw, tinySw } from './config.mjs';
 
 /** @type {Map<string, string>} */
 const activeScanners = new Map();
@@ -30,7 +26,7 @@ tinySw.addMessageListener('REQUEST_START_SCANNER', async ({ clientId, data, repl
   await cleanGhostScanners();
 
   /** @type {string} */
-  const queryKey = data.queryKey || 'default';
+  const queryKey = data?.queryKey || 'default';
 
   /** @type {boolean} */
   let isDuplicate = false;
