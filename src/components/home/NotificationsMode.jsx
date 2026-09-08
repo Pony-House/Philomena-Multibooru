@@ -225,7 +225,7 @@ export const NotificationsMode = ({ accounts, visibleBoorus, onClose, onGoHome }
             const trackerKey = `${acc.booruUrl}_${searchType}`;
 
             /** @type {number | undefined} */
-            const previousId = lastSeenIds.current[trackerKey];
+            const previousId = (lastSeenIds.current ?? [])[trackerKey];
 
             if (previousId && latestImage.id > previousId) {
               /** @type {string} */
@@ -249,7 +249,7 @@ export const NotificationsMode = ({ accounts, visibleBoorus, onClose, onGoHome }
               swManager.emit('FAVICON_UPDATE', { icon: 'alert' });
             }
 
-            lastSeenIds.current[trackerKey] = latestImage.id;
+            (lastSeenIds.current ?? [])[trackerKey] = latestImage.id;
           }
         } catch (error) {
           console.error(`Failed to check notifications for ${acc.booruUrl}:`, error);

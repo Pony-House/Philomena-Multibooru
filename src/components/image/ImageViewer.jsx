@@ -280,7 +280,7 @@ export const ImageViewer = ({
 
       const now = Date.now();
       // Security: 800ms debounce for navigation keys to prevent glitches
-      if (now - lastNavActionTime.current < 500) return;
+      if (now - (lastNavActionTime.current ?? 0) < 500) return;
 
       if (e.key === 'ArrowLeft') {
         e.preventDefault();
@@ -365,7 +365,7 @@ export const ImageViewer = ({
     const unlock = () => {
       const now = Date.now();
       // Security: 800ms debounce for navigation keys to prevent glitches
-      if (now - lastNavActionTime.current < 500) return;
+      if (now - (lastNavActionTime.current ?? 0) < 500) return;
       setIsInteractionReady(true);
     };
 
@@ -391,7 +391,7 @@ export const ImageViewer = ({
       try {
         const data = await fetchComments(
           image.booruUrl,
-          await getAccountBooruApi(image.booruUrl),
+          (await getAccountBooruApi(image.booruUrl)) ?? '',
           `image_id:${image.id}`,
           1,
           controller.signal,
@@ -518,7 +518,7 @@ export const ImageViewer = ({
         if (activeBoorus.length === 0) activeBoorus.push(image.booruUrl);
 
         await syncUserGalleryPages({
-          query: parseQueryResults(currentRecQuery.current),
+          query: parseQueryResults(currentRecQuery.current ?? ''),
           limit: 20,
           page: recPage,
           allowedBoorus: activeBoorus,
@@ -527,7 +527,7 @@ export const ImageViewer = ({
         });
 
         const data = await searchImages({
-          query: parseQueryResults(currentRecQuery.current),
+          query: parseQueryResults(currentRecQuery.current ?? ''),
           limit: 20,
           page: recPage,
           allowedBoorus: activeBoorus,
@@ -588,7 +588,7 @@ export const ImageViewer = ({
           const now = Date.now();
 
           // Anti-Spam Protection: If this trigger happens less than 2000ms after the last fetch started, lock it.
-          if (lastFetchTime.current > 0 && now - lastFetchTime.current < 2000) {
+          if ((lastFetchTime.current ?? 0) > 0 && now - (lastFetchTime.current ?? 0) < 2000) {
             console.warn(
               '⚠️ Security Lock: API request spam detected in recommendations. Infinite scroll paused.',
             );
@@ -661,7 +661,7 @@ export const ImageViewer = ({
     /** @type {string[]} */
     const pathParts = pathWithoutExt.split('/');
     /** @type {string} */
-    const id = pathParts.pop();
+    const id = pathParts.pop() ?? '';
     /** @type {string} */
     const baseUrl = pathParts.join('/');
 
@@ -790,7 +790,7 @@ export const ImageViewer = ({
             <button
               className={`active-fave btn-tool fw-bold border-0 p-0 m-0 px-2${isFav || isLocalFaved ? ' rounded' : ''}`}
               style={{
-                backgroundColor: faveBackground,
+                backgroundColor: faveBackground ?? undefined,
                 color: '#fff',
               }}
               onClick={handleToggleFave}
@@ -802,7 +802,9 @@ export const ImageViewer = ({
             <span
               className={`active-fave${isFav || isLocalFaved ? ' px-2 rounded' : ''}`}
               style={
-                isFav || isLocalFaved ? { backgroundColor: faveBackground, color: '#fff' } : null
+                isFav || isLocalFaved
+                  ? { backgroundColor: faveBackground ?? undefined, color: '#fff' }
+                  : {}
               }
             >
               {faveText}
@@ -810,14 +812,14 @@ export const ImageViewer = ({
           )}
           <span
             className={`active-up${isUp ? ' px-2 rounded' : ''}`}
-            style={isUp ? { backgroundColor: 'var(--upvote-color)', color: '#fff' } : null}
+            style={isUp ? { backgroundColor: 'var(--upvote-color)', color: '#fff' } : {}}
           >
             ↑ {image.upvotes}
           </span>
           <span>{image.upvotes - image.downvotes}</span>
           <span
             className={`active-down${isDown ? ' px-2 rounded' : ''}`}
-            style={isDown ? { backgroundColor: 'var(--downvote-color)', color: '#fff' } : null}
+            style={isDown ? { backgroundColor: 'var(--downvote-color)', color: '#fff' } : {}}
           >
             ↓ {image.downvotes}
           </span>
@@ -863,7 +865,7 @@ export const ImageViewer = ({
               userId={image.uploaderId}
               className="btn-tool"
               onClick={(e) =>
-                handleProfileClick(e, image.booruUrl, image.uploader, image.uploaderId)
+                handleProfileClick(e, image.booruUrl, image.uploader ?? '', image.uploaderId ?? 0)
               }
               openProfile={(booruUrl, username, id) => onOpenProfile(booruUrl, username, id)}
             >
@@ -1229,7 +1231,7 @@ export const ImageViewer = ({
                                       e,
                                       image.booruUrl,
                                       comment.author,
-                                      comment.userId,
+                                      comment.userId ?? 0,
                                     )
                                   }
                                   openProfile={(booruUrl, username, id) =>

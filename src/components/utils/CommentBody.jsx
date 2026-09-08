@@ -43,7 +43,12 @@ export const CommentBody = ({
               const handleRefClick = (e) => {
                 if (openImagesInApp) {
                   e.preventDefault();
-                  openImageLink(booruUrl, onOpenImageLink, setIsLoading, refId);
+                  openImageLink(
+                    booruUrl,
+                    onOpenImageLink ?? (() => undefined),
+                    setIsLoading,
+                    refId,
+                  );
                 }
               };
 
@@ -120,7 +125,12 @@ export const CommentBody = ({
           const handleNormalClick = (e) => {
             if (openImagesInApp && isImageLink) {
               e.preventDefault();
-              openImageLink(booruUrl, onOpenImageLink, setIsLoading, matchTarget);
+              openImageLink(
+                booruUrl,
+                onOpenImageLink ?? (() => undefined),
+                setIsLoading,
+                matchTarget ?? '',
+              );
             } else if (openProfileInApp && isProfileLink) {
               // e.preventDefault();
               // openProfileLink(booruUrl, onOpenProfileLink, setIsLoading, matchTarget);

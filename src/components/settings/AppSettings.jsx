@@ -191,7 +191,7 @@ export const AppSettings = ({
 
     reader.onload = async (e) => {
       try {
-        const json = JSON.parse(typeof e.target.result === 'string' ? e.target.result : '');
+        const json = JSON.parse(typeof e.target?.result === 'string' ? e.target.result : '');
 
         if (!Array.isArray(json)) {
           alert('Invalid JSON format. Expected an array of favorite images.');

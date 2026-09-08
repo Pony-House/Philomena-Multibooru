@@ -181,7 +181,7 @@ export const ThemeSettings = ({ isDark }) => {
     const reader = new FileReader();
     reader.onload = async (e) => {
       try {
-        const json = JSON.parse(typeof e.target.result === 'string' ? e.target.result : '');
+        const json = JSON.parse(typeof e.target?.result === 'string' ? e.target.result : '');
         const hexRegex = /^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/;
         const validKeys = [
           'app_primary',

@@ -255,7 +255,7 @@ const ProfileContextMenu = ({ x, y, booruUrl, username, userId, onClose, openPro
               }}
               onClick={(e) => {
                 e.preventDefault();
-                openProfile(booruUrl, String(userId), userId);
+                openProfile(booruUrl, String(userId), userId ?? 0);
                 onClose();
               }}
             >
@@ -344,7 +344,7 @@ export const ProfileLink = ({
     <>
       <a
         href={targetUrl}
-        target={openProfilesInApp ? null : '_blank'}
+        target={openProfilesInApp ? undefined : '_blank'}
         rel={openProfilesInApp ? '' : 'noopener noreferrer'}
         className={className || 'text-decoration-none fw-bold text-primary cursor-pointer'}
         onContextMenu={handleContextMenu}

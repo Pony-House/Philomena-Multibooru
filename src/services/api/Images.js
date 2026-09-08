@@ -182,7 +182,7 @@ export const fetchComments = async (
  * @param {number} [perPage] - Items per page.
  * @param {string} [sd] - Sort direction ('asc' or 'desc').
  * @param {string} [sf] - Sort field (e.g., 'created_at').
- * @param {number} [limit=null] - Content limit.
+ * @param {number|null} [limit=null] - Content limit.
  * @param {AbortSignal} [signal]
  * @returns {Promise<{ total: number; interactions: any[]; images: any[] }>} Raw API response data.
  */
@@ -391,7 +391,7 @@ const getInteractions = (booruUrl, data) => {
  * @param {number} [perPage] - Results per page.
  * @param {string} [sd] - Sort direction.
  * @param {string} [sf] - Sort field.
- * @param {number} [limit=null] - Content limit.
+ * @param {number|null} [limit=null] - Content limit.
  * @returns {Promise<any>} The raw data returned by the API.
  */
 const syncGalleryPage = async (
@@ -514,7 +514,7 @@ const syncGalleryPage = async (
  * @param {Object} [config] - Configuration object.
  * @param {string} [config.query='*'] - Search query.
  * @param {number} [config.page=1] - Page number.
- * @param {number} [config.limit=null] - Content limit.
+ * @param {number|null} [config.limit=null] - Content limit.
  * @param {string[]|null} [config.allowedBoorus=null] - Boorus to sync.
  * @param {number} [config.perPage=50] - Limit per booru.
  * @param {Account} [config.account] - Specific account to sync.

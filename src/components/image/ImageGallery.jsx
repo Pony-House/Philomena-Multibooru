@@ -124,7 +124,7 @@ const ContextMenu = ({ x, y, img, onClose, onOpenImage, hostname }) => {
 
   /** @type {string} */
   const booruProfileUrl = hasProfile
-    ? `${img.booruUrl}/profiles/${encodeURIComponent(img.uploader.replace(/ /g, '+'))}`
+    ? `${img.booruUrl}/profiles/${encodeURIComponent((img.uploader ?? '').replace(/ /g, '+'))}`
     : '';
 
   /** @type {Array<{ id: string, icon: string, label: string, url: string }>} */
@@ -299,7 +299,7 @@ const ContextMenu = ({ x, y, img, onClose, onOpenImage, hostname }) => {
               }}
               onClick={(e) => {
                 e.preventDefault();
-                onOpenImage(img);
+                if (onOpenImage) onOpenImage(img);
                 onClose();
               }}
             >
@@ -432,7 +432,7 @@ export const Image = ({ img, className, onOpenImage }) => {
   /** @type {string} */
   const targetUrl = `${img.booruUrl}/images/${img.id}`;
   /** @type {boolean} */
-  const isVideo = img.mimeType && img.mimeType.startsWith('video/');
+  const isVideo = img.mimeType && img.mimeType.startsWith('video/') ? true : false;
   /** @type {number} */
   const score = img.upvotes - img.downvotes;
   /** @type {boolean} */

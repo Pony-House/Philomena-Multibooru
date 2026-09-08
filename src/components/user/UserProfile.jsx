@@ -80,7 +80,7 @@ export const UserProfile = ({
     const loadCache = { isMounted: true, url: booruUrl, id: userId, trigger: refreshTrigger };
     // Prevent duplicate firing in React Strict Mode
     const isTheSame =
-      lastFetched.current.url === booruUrl &&
+      lastFetched.current?.url === booruUrl &&
       lastFetched.current.id === userId &&
       lastFetched.current.trigger === refreshTrigger;
     if (!isTheSame) lastFetched.current = loadCache;
@@ -104,13 +104,13 @@ export const UserProfile = ({
               query: parseQueryResults(uploaderQuery),
               allowedBoorus,
               perPage: 4,
-              account,
+              account: account ?? undefined,
             }),
             syncUserGalleryPages({
               query: parseQueryResults(favedQuery),
               allowedBoorus,
               perPage: 4,
-              account,
+              account: account ?? undefined,
             }),
           ]);
 
@@ -125,7 +125,7 @@ export const UserProfile = ({
               limit: 4,
               allowedBoorus: allowedBoorus,
             }),
-            fetchComments(booruUrl, account.apiKey, `user_id:${userId}`, 1),
+            fetchComments(booruUrl, account ? account.apiKey : '', `user_id:${userId}`, 1),
           ]);
 
           if (loadCache.isMounted) {
@@ -142,7 +142,9 @@ export const UserProfile = ({
     };
 
     if (!isTheSame) loadData();
-    else lastFetched.current.isMounted = true;
+    else {
+      if (lastFetched.current) lastFetched.current.isMounted = true;
+    }
     return () => {
       loadCache.isMounted = false;
     };
@@ -202,7 +204,7 @@ export const UserProfile = ({
             style={{
               width: '120px',
               height: '120px',
-              backgroundImage: profile.avatarUrl ? `url(${profile.avatarUrl})` : null,
+              backgroundImage: profile.avatarUrl ? `url(${profile.avatarUrl})` : undefined,
               backgroundSize: 'cover',
               backgroundPosition: 'center',
               backgroundColor: profile.avatarUrl ? 'transparent' : 'var(--app-primary)',
@@ -526,7 +528,7 @@ export const UserProfile = ({
                                   if (localStorage.getItem('app_inAppProfileViewer') !== 'true')
                                     return;
                                   e.preventDefault();
-                                  onOpenProfile(booruUrl, comment.author, comment.userId);
+                                  onOpenProfile(booruUrl, comment.author, comment.userId ?? 0);
                                 }}
                                 openProfile={onOpenProfile}
                               >
