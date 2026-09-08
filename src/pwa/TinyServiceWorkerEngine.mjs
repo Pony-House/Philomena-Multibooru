@@ -1,7 +1,7 @@
 import { segmentExtractorV1 } from 'tiny-essentials/regexp/SegmentExtractor';
-import TinyDebugger from 'tiny-essentials/libs/tools/TinyDebugger';
 import TinyCloner from 'tiny-essentials/libs/utils/TinyCloner';
 import TinyHttpResponseRegistry from 'tiny-essentials/libs/tools/TinyHttpResponseRegistry';
+import TinyPluginCore from './TinyPluginCore.mjs';
 import TinyPlugin from './TinyPlugin.mjs';
 
 const codeIs = TinyHttpResponseRegistry.codeIs;
@@ -266,7 +266,7 @@ const getResType = (code) => {
 /**
  * Manages the lifecycle and execution of modules based on the provided configuration.
  */
-class TinyServiceWorkerEngine extends TinyDebugger {
+class TinyServiceWorkerEngine extends TinyPluginCore {
   /**
    * Validates if an event type is a reserved name for the internal lifecycle.
    * @param {string} type - The name of the event to validate.
@@ -394,38 +394,6 @@ class TinyServiceWorkerEngine extends TinyDebugger {
     // 2. Compare the origin of the request with the origin of the Service Worker itself
     // self.location.origin provides the protocol, domain, and port of the Service Worker
     return reqUrl.origin === self.location.origin;
-  }
-
-  /** @type {Map<string, TinyServiceWorkerPlugin<any>>} A map of registered plugins. */
-  #plugins = new Map();
-
-  /**
-   * Registers a plugin instance into the engine's internal plugin registry.
-   *
-   * @param {TinyServiceWorkerPlugin<any>} plugin - The plugin instance to be registered.
-   */
-  _addPlugin(plugin) {
-    this.#plugins.set(plugin.id, plugin);
-  }
-
-  /**
-   * Checks if a specific plugin is already registered in the engine's internal registry.
-   *
-   * @param {TinyServiceWorkerPlugin<any>} plugin - The plugin instance to check.
-   * @returns {boolean} True if the plugin is registered, false otherwise.
-   */
-  _hasPlugin(plugin) {
-    return this.#plugins.has(plugin.id);
-  }
-
-  /**
-   * Returns a plain object representation of the registered plugins.
-   * This converts the internal Map into a standard object, providing a snapshot
-   * of the plugins for easier external access.
-   * @returns {Record<string, TinyServiceWorkerPlugin<any>>} An object where keys are plugin names and values are the plugin instances.
-   */
-  get plugins() {
-    return Object.fromEntries(this.#plugins);
   }
 
   /**

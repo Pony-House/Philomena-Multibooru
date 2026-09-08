@@ -1,9 +1,9 @@
-import { isAnyClassInstance } from 'tiny-essentials/basics/objChecker';
 import TinyVersion from 'tiny-essentials/libs/plugin/TinyVersion';
+import TinyPluginCore from './TinyPluginCore.mjs';
 
 /**
  * A function used to install a plugin into the engine.
- * @template {any} Engine
+ * @template {TinyPluginCore<any, Options>} Engine
  * @template {any[]} Options
  * @typedef { (plugin: TinyPlugin<Engine, Options>, ...options: Options) => void } TinyPluginInstaller
  */
@@ -13,13 +13,13 @@ import TinyVersion from 'tiny-essentials/libs/plugin/TinyVersion';
  * It encapsulates the plugin's identity (id and version), its connection to the engine,
  * the installation logic, and any associated configuration options.
  *
- * @template {any} Engine
+ * @template {TinyPluginCore<any, Options>} Engine
  * @template {any[]} Options
  */
 class TinyPlugin {
   /**
    * Installs a new plugin into a engine and starts its lifecycle.
-   * @template {any} NewEngine
+   * @template {TinyPluginCore<any, NewOptions>} NewEngine
    * @template {any[]} NewOptions
    * @param {NewEngine} engine - The main instance connected to plugin.
    * @param {TinyPluginInstaller<NewEngine, NewOptions>} plugin - The plugin instance to be registered.
@@ -27,20 +27,11 @@ class TinyPlugin {
    * @returns {TinyPlugin<NewEngine, NewOptions>} - The plugin instance.
    */
   static install(engine, plugin, ...options) {
-    if (
-      !isAnyClassInstance(engine) ||
-      // @ts-ignore
-      typeof engine._addPlugin !== 'function' ||
-      // @ts-ignore
-      typeof engine._hasPlugin !== 'function'
-    )
-      throw new Error();
+    if (!(engine instanceof TinyPluginCore)) throw new Error('');
     const instance = new TinyPlugin({ engine: engine, installer: plugin }, ...options);
     instance.start();
-    // @ts-ignore
     if (engine._hasPlugin(instance))
       throw new Error(`A plugin with the name "${instance.id}" is already registered.`);
-    // @ts-ignore
     engine._addPlugin(instance);
     return instance;
   }
@@ -57,6 +48,25 @@ class TinyPlugin {
   #options;
   /** @type {boolean} Indicates whether the plugin has already been started and is ready. */
   #isReady = false;
+
+  get plugins() {
+    return this.#engine._getAllPlugins();
+  }
+
+  /**
+   * @param {string} id
+   */
+  getPlugin(id) {
+    return this.#engine._getPlugin(id);
+  }
+
+  /**
+   * @param {TinyPlugin<Engine, any>|string} plugin - The plugin instance to check.
+   * @returns {boolean} True if the plugin is registered, false otherwise.
+   */
+  hasPlugin(plugin) {
+    return this.#engine._hasPlugin(plugin);
+  }
 
   /**
    * Gets the readiness status of the plugin.
