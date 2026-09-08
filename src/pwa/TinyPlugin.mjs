@@ -1,3 +1,4 @@
+import TinyVersion from 'tiny-essentials/libs/plugin/TinyVersion';
 
 /**
  * A function used to install a plugin into the engine.
@@ -5,7 +6,6 @@
  * @template {any[]} Options
  * @typedef { (plugin: TinyPlugin<Engine, Options>, ...options: Options) => void } TinyPluginInstaller
  */
-
 
 /**
  * Represents a plugin instance designed to be integrated into a main engine.
@@ -18,8 +18,8 @@
 class TinyPlugin {
   /** @type {string} The unique id of the plugin. */
   #id = '';
-  /** @type {string} The version string of the plugin. */
-  #version = '';
+  /** @type {TinyVersion|null} The version string of the plugin. */
+  #version = null;
   /** @type {Engine} The engine instance this plugin is attached to. */
   #engine;
   /** @type {TinyPluginInstaller<Engine, Options>} The installer function used to initialize the plugin. */
@@ -42,10 +42,11 @@ class TinyPlugin {
    * @returns {string} The plugin id.
    */
   get id() {
+    if (this.#id.length === 0) throw new Error('Plugin id is not set.');
     return this.#id;
   }
 
-    /**
+  /**
    * Sets the id of the plugin.
    * @param {string} value - The new id for the plugin.
    * @throws {Error} If the id is already set.
@@ -63,7 +64,8 @@ class TinyPlugin {
    * @returns {string} The plugin version.
    */
   get version() {
-    return this.#version;
+    if (!this.#version) throw new Error('Plugin version is not set.');
+    return this.#version.toString();
   }
 
   /**
@@ -73,10 +75,10 @@ class TinyPlugin {
    * @throws {TypeError} If the value is not a string or is empty.
    */
   set version(value) {
-    if (this.#version.length !== 0) throw new Error('Version is already set.');
+    if (this.#version) throw new Error('Version is already set.');
     if (typeof value !== 'string') throw new TypeError('Version must be a string.');
     if (value.length === 0) throw new TypeError('Version cannot be empty.');
-    this.#version = value;
+    this.#version = new TinyVersion(value);
   }
 
   /**
@@ -89,10 +91,10 @@ class TinyPlugin {
 
   /**
    * Gets the configuration options of the plugin.
-   * @returns {Readonly<Options>} A read-only array of options.
+   * @returns {Options} A read-only array of options.
    */
   get options() {
-    return Object.freeze(this.#options);
+    return this.#options;
   }
 
   /**
@@ -109,6 +111,15 @@ class TinyPlugin {
   }
 
   /**
+   * Retrieves the current version of the plugin as a TinyVersion instance.
+   * @returns {TinyVersion<string>} The TinyVersion instance representing the plugin's version.
+   */
+  getVersion() {
+    if (!this.#version) throw new Error('Plugin version is not set.');
+    return this.#version;
+  }
+
+  /**
    * Starts the plugin lifecycle by calling the installer.
    * @throws {Error} If id or version are not set.
    */
@@ -116,7 +127,7 @@ class TinyPlugin {
     if (this.#isReady) throw new Error('Plugin is already ready.');
     this.#installer(this, ...this.#options);
     if (this.#id.length === 0) throw new Error('Plugin id is not set.');
-    if (this.#version.length === 0) throw new Error('Plugin version is not set.');
+    if (!this.#version) throw new Error('Plugin version is not set.');
   }
 }
 
