@@ -341,7 +341,7 @@ class TinyPlugin {
 
   /**
    * Gets the version of the plugin as a string.
-   * @returns {string} The plugin version.
+   * @returns {VersionString} The plugin version.
    */
   get version() {
     if (!this.#version) throw new Error('Plugin version is not set.');
