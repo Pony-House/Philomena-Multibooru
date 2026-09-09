@@ -1,7 +1,7 @@
 import { segmentExtractorV1 } from 'tiny-essentials/regexp/SegmentExtractor';
 import TinyCloner from 'tiny-essentials/libs/utils/TinyCloner';
 import TinyHttpResponseRegistry from 'tiny-essentials/libs/tools/TinyHttpResponseRegistry';
-import { TinyPluginCore, TinyPlugin } from './TinyPlugin.mjs';
+import { TinyPluginCore, TinyPlugin, TinyPluginLayer } from './TinyPlugin.mjs';
 
 const codeIs = TinyHttpResponseRegistry.codeIs;
 
@@ -252,18 +252,20 @@ const getResType = (code) => {
 
 /**
  * A function used to install a plugin into the engine.
+ * @template {TinyPluginLayer} Layer
  * @template {string} IdString
  * @template {string} VersionString
  * @template {any[]} Options
- * @typedef {import('./TinyPlugin.mjs').TinyPluginInstaller<TinyServiceWorkerEngine, IdString, VersionString, Options>} SwPluginInstaller
+ * @typedef {import('./TinyPlugin.mjs').TinyPluginInstaller<TinyServiceWorkerEngine, Layer, IdString, VersionString, Options>} SwPluginInstaller
  */
 
 /**
  * Represents a plugin instance designed to be integrated into a TinyServiceWorkerEngine.
+ * @template {TinyPluginLayer} Layer
  * @template {string} IdString
  * @template {string} VersionString
  * @template {any[]} Options
- * @typedef {TinyPlugin<TinyServiceWorkerEngine, IdString, VersionString, Options>} TinyServiceWorkerPlugin
+ * @typedef {TinyPlugin<TinyServiceWorkerEngine, Layer, IdString, VersionString, Options>} TinyServiceWorkerPlugin
  */
 
 /**

@@ -61,19 +61,21 @@ import TinyVersion from 'tiny-essentials/libs/plugin/TinyVersion';
  * @typedef {import('tiny-essentials/libs/tools/TinyDebugger').DebuggerConstructor} DebuggerConstructor
  */
 
+class TinyPluginLayer {}
+
 /**
  * The core engine class responsible for managing the plugin lifecycle and registry.
  * It extends TinyDebugger to provide debugging capabilities alongside plugin management.
  */
 class TinyPluginCore extends TinyDebugger {
-  /** @type {Map<string, TinyPlugin<this, string, string, any[]>>} A map of registered plugins. */
+  /** @type {Map<string, TinyPlugin<this, TinyPluginLayer, string, string, any[]>>} A map of registered plugins. */
   #plugins = new Map();
 
   /**
    * Returns a plain object representation of the registered plugins.
    * This converts the internal Map into a standard object, providing a snapshot
    * of the plugins for easier external access.
-   * @returns {Record<string, TinyPlugin<this, string, string, any[]>>} An object where keys are plugin names and values are the plugin instances.
+   * @returns {Record<string, TinyPlugin<this, TinyPluginLayer, string, string, any[]>>} An object where keys are plugin names and values are the plugin instances.
    */
   get plugins() {
     return Object.fromEntries(this.#plugins);
@@ -98,7 +100,7 @@ class TinyPluginCore extends TinyDebugger {
   /**
    * Registers a plugin instance into the engine's internal plugin registry.
    *
-   * @param {TinyPlugin<this, string, string, any[]>} plugin - The plugin instance to be registered.
+   * @param {TinyPlugin<this, TinyPluginLayer, string, string, any[]>} plugin - The plugin instance to be registered.
    */
   _addPlugin(plugin) {
     this.#plugins.set(plugin.id, plugin);
@@ -106,12 +108,13 @@ class TinyPluginCore extends TinyDebugger {
 
   /**
    * Installs a new plugin into the engine and starts its lifecycle.
+   * @template {TinyPluginLayer} Layer
    * @template {string} Id
    * @template {string} Version
    * @template {any[]} Options
-   * @param {TinyPluginInstaller<this, Id, Version, Options>} plugin - The plugin instance to be registered.
+   * @param {TinyPluginInstaller<this, Layer, Id, Version, Options>} plugin - The plugin instance to be registered.
    * @param {Options} options - Configuration options for the plugin.
-   * @returns {TinyPlugin<this, Id, Version, Options>} The newly installed plugin instance.
+   * @returns {TinyPlugin<this, Layer, Id, Version, Options>} The newly installed plugin instance.
    */
   installPlugin(plugin, ...options) {
     return TinyPlugin.addModuleToCore(this, plugin, ...options);
@@ -120,7 +123,7 @@ class TinyPluginCore extends TinyDebugger {
   /**
    * Checks if a specific plugin is already registered in the engine's internal registry.
    *
-   * @param {TinyPlugin<this, string, string, any[]>|string} plugin - The plugin instance to check.
+   * @param {TinyPlugin<this, TinyPluginLayer, string, string, any[]>|string} plugin - The plugin instance to check.
    * @returns {boolean} True if the plugin is registered, false otherwise.
    */
   hasPlugin(plugin) {
@@ -130,7 +133,7 @@ class TinyPluginCore extends TinyDebugger {
   /**
    * Retrieves a plugin instance by its unique identifier.
    * @param {string} key - The unique identifier of the plugin to retrieve.
-   * @returns {TinyPlugin<this, string, string, any[]>|undefined} The plugin instance if found, otherwise undefined.
+   * @returns {TinyPlugin<this, TinyPluginLayer, string, string, any[]>|undefined} The plugin instance if found, otherwise undefined.
    */
   getPlugin(key) {
     return this.#plugins.get(key);
@@ -140,10 +143,11 @@ class TinyPluginCore extends TinyDebugger {
 /**
  * A function used to install a plugin into the engine.
  * @template {TinyPluginCore} Engine
+ * @template {TinyPluginLayer} Layer
  * @template {string} IdString
  * @template {string} VersionString
  * @template {any[]} Options
- * @typedef { (plugin: TinyPlugin<Engine, IdString, VersionString, Options>, ...options: Options) => void } TinyPluginInstaller
+ * @typedef { (plugin: TinyPlugin<Engine, Layer, IdString, VersionString, Options>, ...options: Options) => Layer } TinyPluginInstaller
  */
 
 /**
@@ -152,6 +156,7 @@ class TinyPluginCore extends TinyDebugger {
  * the installation logic, and any associated configuration options.
  *
  * @template {TinyPluginCore} Engine
+ * @template {TinyPluginLayer} Layer
  * @template {string} IdString
  * @template {string} VersionString
  * @template {any[]} Options
@@ -160,23 +165,22 @@ class TinyPlugin {
   /**
    * Installs a new plugin into a engine and starts its lifecycle.
    * @template {TinyPluginCore} ExternalEngine
+   * @template {TinyPluginLayer} ExternalLayer
    * @template {string} ExternalIdString
    * @template {string} ExternalVersionString
    * @template {any[]} ExternalOptions
    * @param {ExternalEngine} engine - The main instance connected to plugin.
-   * @param {TinyPluginInstaller<ExternalEngine, ExternalIdString, ExternalVersionString, ExternalOptions>} plugin - The plugin instance to be registered.
+   * @param {TinyPluginInstaller<ExternalEngine, ExternalLayer, ExternalIdString, ExternalVersionString, ExternalOptions>} plugin - The plugin instance to be registered.
    * @param {ExternalOptions} options - Configuration options for the plugin.
-   * @returns {TinyPlugin<ExternalEngine, ExternalIdString, ExternalVersionString, ExternalOptions>} - The plugin instance.
+   * @returns {TinyPlugin<ExternalEngine, ExternalLayer, ExternalIdString, ExternalVersionString, ExternalOptions>} - The plugin instance.
    */
   static addModuleToCore(engine, plugin, ...options) {
     if (!(engine instanceof TinyPluginCore)) throw new Error('');
-    /** @type {TinyPlugin<ExternalEngine, ExternalIdString, ExternalVersionString, ExternalOptions>} */
+    /** @type {TinyPlugin<ExternalEngine, ExternalLayer, ExternalIdString, ExternalVersionString, ExternalOptions>} */
     const instance = new TinyPlugin({ engine: engine, installer: plugin }, ...options);
     instance.start();
-    // @ts-ignore
     if (engine.hasPlugin(instance))
       throw new Error(`A plugin with the name "${instance.id}" is already registered.`);
-    // @ts-ignore
     engine._addPlugin(instance);
     return instance;
   }
@@ -194,16 +198,24 @@ class TinyPlugin {
   #version = null;
   /** @type {Engine} The engine instance this plugin is attached to. */
   #engine;
-  /** @type {TinyPluginInstaller<Engine, IdString, VersionString, Options>} The installer function used to initialize the plugin. */
+  /** @type {TinyPluginInstaller<Engine, Layer, IdString, VersionString, Options>} The installer function used to initialize the plugin. */
   #installer;
   /** @type {Options} An array of configuration options provided to the plugin. */
   #options;
   /** @type {boolean} Indicates whether the plugin has already been started and is ready. */
   #isReady = false;
+  /** @type {Layer|null} */
+  #layer = null;
+
+  /** @returns {Layer} */
+  get layer() {
+    if (this.#layer === null) throw new Error('Plugin layer is not set.');
+    return this.#layer;
+  }
 
   /**
    * Gets the plugins object from the engine.
-   * @returns {Record<string, TinyPlugin<Engine, string, string, any[]>>} The plugins object from the engine.
+   * @returns {Record<string, TinyPlugin<Engine, TinyPluginLayer, string, string, any[]>>} The plugins object from the engine.
    */
   get plugins() {
     return this.#engine.plugins;
@@ -220,7 +232,7 @@ class TinyPlugin {
   /**
    * Retrieves the plugin instance associated with the given ID from the engine.
    * @param {string} id - The unique identifier of the plugin.
-   * @returns {TinyPlugin<Engine, string, string, any[]>|undefined} The plugin instance if found, otherwise undefined.
+   * @returns {TinyPlugin<Engine, TinyPluginLayer, string, string, any[]>|undefined} The plugin instance if found, otherwise undefined.
    */
   getPlugin(id) {
     return this.#engine.getPlugin(id);
@@ -228,7 +240,7 @@ class TinyPlugin {
 
   /**
    * Checks if the specified plugin or ID is registered in the engine.
-   * @param {TinyPlugin<Engine, string, string, any[]>|string} plugin - The plugin instance to check.
+   * @param {TinyPlugin<Engine, TinyPluginLayer, string, string, any[]>|string} plugin - The plugin instance to check.
    * @returns {boolean} True if the plugin is registered, false otherwise.
    */
   hasPlugin(plugin) {
@@ -390,7 +402,7 @@ class TinyPlugin {
    * Initializes a new instance of TinyPlugin.
    * @param {Object} config - The configuration object.
    * @param {Engine} config.engine - The engine instance.
-   * @param {TinyPluginInstaller<Engine, IdString, VersionString, Options>} config.installer - The installer function.
+   * @param {TinyPluginInstaller<Engine, Layer, IdString, VersionString, Options>} config.installer - The installer function.
    * @param {Options} ops - Additional configuration options.
    */
   constructor({ engine, installer }, ...ops) {
@@ -405,7 +417,8 @@ class TinyPlugin {
    */
   start() {
     if (this.#isReady) throw new Error('Plugin is already ready.');
-    this.#installer(this, ...this.#options);
+    this.#layer = this.#installer(this, ...this.#options);
+    if (!(this.#layer instanceof TinyPluginLayer)) throw new Error('Plugin layer is not set.');
     if (this.#id.length === 0) throw new Error('Plugin id is not set.');
     if (this.#description.length === 0) throw new Error('Plugin description is not set.');
     if (this.#authors.length === 0) throw new Error('Plugin authors is not set.');
@@ -414,4 +427,4 @@ class TinyPlugin {
   }
 }
 
-export { TinyPlugin, TinyPluginCore };
+export { TinyPlugin, TinyPluginCore, TinyPluginLayer };
