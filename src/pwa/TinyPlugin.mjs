@@ -85,6 +85,18 @@ class TinyPluginLayer {
  * It extends TinyDebugger to provide debugging capabilities alongside plugin management.
  */
 class TinyPluginCore extends TinyDebugger {
+  static #pluginsDestroyEventName = 'pluginsDestroyed';
+
+  static get pluginsDestroyEventName() {
+    return TinyPluginCore.pluginsDestroyEventName;
+  }
+
+  static set pluginsDestroyEventName(value) {
+    if (typeof value !== 'string')
+      throw new TypeError('pluginsDestroyEventName must be a string.');
+    TinyPluginCore.pluginsDestroyEventName = value;
+  }
+
   /** @type {Map<string, TinyPlugin<this, TinyPluginLayer, string, string, any[]>>} A map of registered plugins. */
   #plugins = new Map();
 
@@ -158,6 +170,7 @@ class TinyPluginCore extends TinyDebugger {
 
   destroyPlugins() {
     this.#plugins.forEach((plugin) => plugin.destroy());
+    this.emit(TinyPluginCore.#pluginsDestroyEventName);
   }
 }
 
