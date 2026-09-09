@@ -2,6 +2,7 @@ import { TinyPluginLayer } from '../TinyPlugin.mjs';
 import TinyServiceWorkerEngine from '../TinyServiceWorkerEngine.mjs';
 
 /**
+ * Represents information about a single browser tab.
  * @typedef {Object} TabInfo
  * @property {string} id - The unique Client ID provided by the browser.
  * @property {string} url - The current URL of the tab.
@@ -9,32 +10,38 @@ import TinyServiceWorkerEngine from '../TinyServiceWorkerEngine.mjs';
  */
 
 /**
- * @typedef {Object} TabList
- * @property {number} count - Total number of open tabs.
- * @property {TabInfo[]} tabs - Array of tab information.
- */
-
-/**
- * @typedef {Object} TabMessagePayload
- * @property {string} type - The message type (e.g., 'tab:register', 'tab:update', 'tab:unregister').
- * @property {Partial<TabInfo>} [data] - The data associated with the tab update.
- */
-
-/**
+ * A mapping of unique tab IDs to their corresponding TabInfo objects.
  * @typedef {Map<string, TabInfo>} TabInstance
  */
 
+/**
+ * A layer within the TinyPlugin system specifically designed to manage and track tab instances.
+ */
 class TinySwTabsLayer extends TinyPluginLayer {
-  /** @type {Map<number, TabInstance>} */
+  /**
+   * A static registry that stores all active tab instances indexed by a unique key.
+   * @type {Map<number, TabInstance>}
+   */
   static #instances = new Map();
+  /**
+   * A static counter used to assign unique keys to new TinySwTabsLayer instances.
+   * @type {number}
+   */
   static #lastIndex = -1;
 
-  /** @type {number} */
+  /**
+   * The unique identifier assigned to the current instance of the layer.
+   * @type {number}
+   */
   #key;
-  /** @type {TabInstance} */
+  /**
+   * A private Map storing the current session's tab information.
+   * @type {TabInstance}
+   */
   #tabs = new Map();
 
   /**
+   * Retrieves a snapshot of all tabs currently managed by the instance corresponding to the provided key.
    * @param {number} key
    * @returns {Record<string, TabInfo>|null}
    */
@@ -52,6 +59,7 @@ class TinySwTabsLayer extends TinyPluginLayer {
   }
 
   /**
+   * Retrieves the information for a specific tab by its unique ID.
    * @param {string} id
    * @returns {TabInfo|null}
    */
@@ -64,12 +72,16 @@ class TinySwTabsLayer extends TinyPluginLayer {
   }
 
   /**
+   * Initializes the layer and begins monitoring tab changes via a callback.
    * @param {(tabs: TabInstance) => void} callback
    */
   _start(callback) {
     return this._startLayer(callback, this.#tabs);
   }
 
+  /**
+   * Initializes a new instance of the TinySwTabsLayer, assigning it a unique key and registering it in the static instances registry.
+   */
   constructor() {
     super();
     TinySwTabsLayer.#lastIndex++;
@@ -114,64 +126,88 @@ const TinyTabManagerPlugin = (instance) => {
     };
 
     // 1. Handle Tab Registration (When a new tab opens)
-    engine.addMessageListener('tab:register', async (msg) => {
-      const { data, clientId } = msg;
+    engine.addMessageListener(
+      'tab:register',
+      /**
+       * Processes registration messages to add new tabs to the registry.
+       * @param {Object} msg
+       */ async (msg) => {
+        const { data, clientId } = msg;
 
-      if (typeof data?.url !== 'string' || typeof data?.title !== 'string') {
-        throw new TypeError(
-          '[TinyTabManagerPlugin] tab:register: data must contain url (string) and title (string).',
-        );
-      }
+        if (typeof data?.url !== 'string' || typeof data?.title !== 'string') {
+          throw new TypeError(
+            '[TinyTabManagerPlugin] tab:register: data must contain url (string) and title (string).',
+          );
+        }
 
-      tabs.set(clientId, {
-        id: clientId,
-        url: data.url,
-        title: data.title,
-      });
-
-      await broadcastUpdate();
-    });
-
-    // 2. Handle Tab Update (When URL or Title changes)
-    engine.addMessageListener('tab:update', async (msg) => {
-      const { data, clientId } = msg;
-
-      if (typeof data?.url !== 'string' || typeof data?.title !== 'string') {
-        throw new TypeError(
-          '[TinyTabManagerPlugin] tab:update: data must contain url (string) and title (string).',
-        );
-      }
-
-      if (tabs.has(clientId)) {
         tabs.set(clientId, {
           id: clientId,
           url: data.url,
           title: data.title,
         });
+
         await broadcastUpdate();
-      }
-    });
+      },
+    );
+
+    // 2. Handle Tab Update (When URL or Title changes)
+    engine.addMessageListener(
+      'tab:update',
+      /**
+       * Processes update messages to refresh existing tab information.
+       * @param {Object} msg
+       */ async (msg) => {
+        const { data, clientId } = msg;
+
+        if (typeof data?.url !== 'string' || typeof data?.title !== 'string') {
+          throw new TypeError(
+            '[TinyTabManagerPlugin] tab:update: data must contain url (string) and title (string).',
+          );
+        }
+
+        if (tabs.has(clientId)) {
+          tabs.set(clientId, {
+            id: clientId,
+            url: data.url,
+            title: data.title,
+          });
+          await broadcastUpdate();
+        }
+      },
+    );
 
     // 3. Handle Tab Unregistration (When a tab is closed)
-    engine.addMessageListener('tab:unregister', async (msg) => {
-      const { clientId } = msg;
+    engine.addMessageListener(
+      'tab:unregister',
+      /**
+       * Processes unregistration messages to remove tabs from the registry.
+       * @param {Object} msg
+       */ async (msg) => {
+        const { clientId } = msg;
 
-      if (tabs.has(clientId)) {
-        tabs.delete(clientId);
-        await broadcastUpdate();
-      }
-    });
+        if (tabs.has(clientId)) {
+          tabs.delete(clientId);
+          await broadcastUpdate();
+        }
+      },
+    );
 
     // 4. Handle Request for current list (Manual polling)
-    engine.addMessageListener('tab:get_list', async (msg) => {
-      const tabList = {
-        count: tabs.size,
-        tabs: Array.from(tabs.values()),
-      };
+    engine.addMessageListener(
+      'tab:get_list',
+      /**
+       * Listens for requests to retrieve the current list of all registered tabs.
+       * @param {Object} msg
+       */ async (msg) => {
+        const tabList = {
+          count: tabs.size,
+          tabs: Array.from(tabs.values()),
+        };
 
-      // Reply directly to the source of the request
-      msg.reply('tab:list_response', tabList);
-    });
+        // Reply directly to the source of the request
+        msg.reply('tab:list_response', tabList);
+      },
+    );
   });
 
   return layer;
