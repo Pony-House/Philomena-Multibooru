@@ -87,22 +87,24 @@ class TinyPluginLayer {
   }
 }
 
+/** @typedef {string|symbol} BlackListValue */
+
 /**
  * @typedef {Object} BlackListCore
- * @property {string[]} get
- * @property {string[]} set
+ * @property {BlackListValue[]} get
+ * @property {BlackListValue[]} set
  */
 
 /**
  * @typedef {Object} BlackListCorePartial
- * @property {string[]} [get]
- * @property {string[]} [set]
+ * @property {BlackListValue[]} [get]
+ * @property {BlackListValue[]} [set]
  */
 
 /**
  * @typedef {Object} BlackListCoreProtected
- * @property {Readonly<string[]>} get
- * @property {Readonly<string[]>} set
+ * @property {Readonly<BlackListValue[]>} get
+ * @property {Readonly<BlackListValue[]>} set
  */
 
 /**
@@ -175,17 +177,22 @@ class TinyPluginCore extends TinyDebugger {
     if (ops?.sandboxBlacklist) {
       /**
        * @param {string} key
-       * @param {string[]} values
+       * @param {BlackListValue[]} values
        */
       const checkBlackList = (key, values) => {
-        if (!Array.isArray(values) || !values.every((k) => typeof k === 'string')) {
+        if (
+          !Array.isArray(values) ||
+          !values.every((k) => typeof k === 'string' || typeof k === 'symbol')
+        ) {
           throw new TypeError(`The ${key} of sandbox blacklist must be an array of strings.`);
         }
       };
 
       if (isJsonObject(ops.sandboxBlacklist)) {
-        if (typeof ops.sandboxBlacklist.get !== 'undefined') checkBlackList('get', ops.sandboxBlacklist.get);
-        if (typeof ops.sandboxBlacklist.set !== 'undefined') checkBlackList('set', ops.sandboxBlacklist.set);
+        if (typeof ops.sandboxBlacklist.get !== 'undefined')
+          checkBlackList('get', ops.sandboxBlacklist.get);
+        if (typeof ops.sandboxBlacklist.set !== 'undefined')
+          checkBlackList('set', ops.sandboxBlacklist.set);
         this.#sandboxBlacklist = {
           get: [...(ops.sandboxBlacklist.get ?? [])],
           set: [...(ops.sandboxBlacklist.set ?? [])],
@@ -333,6 +340,9 @@ class TinyPlugin extends TinyDebugger {
     engine._addPlugin(instance);
     return instance;
   }
+
+  /** @type {BlackListCore} */
+  #sandboxBlacklist = { get: [], set: [] };
 
   /** @type {IdString} The unique id of the plugin. */
   // @ts-ignore
@@ -568,23 +578,10 @@ class TinyPlugin extends TinyDebugger {
    */
   get engine() {
     checkDestroy(this.#isDestroyed);
-    const coreBlacklist = this.#engine.sandboxBlacklist ?? { get: {}, set: {} };
-    /** @type {(string|symbol)[]} */
-    const blockedGetKeys = [
-      'getPlugin',
-      'plugins',
-      'installPlugin',
-      '_addPlugin',
-      'destroyPlugins',
-      ...coreBlacklist.get,
-    ];
-
-    /** @type {(string|symbol)[]} */
-    const blockedEditKeys = [...blockedGetKeys, ...coreBlacklist.set];
-
+    const sandboxBlacklist = this.#sandboxBlacklist;
     return new Proxy(this.#engine, {
       get(target, prop) {
-        if (blockedGetKeys.includes(prop)) {
+        if (sandboxBlacklist.get.includes(prop)) {
           // Prevent access to blocked private/internal methods
           throw new Error(
             `Security Error: Access to property "${String(prop)}" is denied by the sandbox.`,
@@ -594,7 +591,7 @@ class TinyPlugin extends TinyDebugger {
         return typeof value === 'function' ? value.bind(target) : value;
       },
       set(target, prop, newValue) {
-        if (blockedEditKeys.includes(prop)) {
+        if (sandboxBlacklist.set.includes(prop)) {
           // Prevent the plugin from modifying blocked properties on the sandbox
           throw new Error(
             'Security Error: Cannot modify read-only properties on the plugin sandbox.',
@@ -648,10 +645,10 @@ class TinyPlugin extends TinyDebugger {
    * This prevents the plugin from accessing the 'engine' or mutating the plugin instance.
    */
   #createSandbox() {
-    /** @type {(string|symbol)[]} */
+    /** @type {BlackListValue[]} */
     const allowedEditKeys = ['id', 'version', 'description', 'authors', 'contributors'];
 
-    /** @type {(string|symbol)[]} */
+    /** @type {BlackListValue[]} */
     const allowedGetKeys = [
       ...allowedEditKeys,
       'tinyVersion',
@@ -667,6 +664,22 @@ class TinyPlugin extends TinyDebugger {
       'getPlugin',
       'isDestroyed',
     ];
+
+    const coreBlacklist = this.#engine.sandboxBlacklist ?? { get: {}, set: {} };
+    /** @type {BlackListValue[]} */
+    const blockedGetKeys = [
+      'getPlugin',
+      'plugins',
+      'installPlugin',
+      '_addPlugin',
+      'destroyPlugins',
+      ...coreBlacklist.get,
+    ];
+
+    /** @type {BlackListValue[]} */
+    const blockedEditKeys = [...blockedGetKeys, ...coreBlacklist.set];
+
+    this.#sandboxBlacklist = { get: blockedGetKeys, set: blockedEditKeys };
 
     return new Proxy(this, {
       get(target, prop) {
