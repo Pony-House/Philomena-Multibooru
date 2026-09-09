@@ -65,13 +65,15 @@ class TinyPluginLayer {
   #isReady = false;
   /**
    * @template {any[]} Args
-   * @param {(...args: Args) => void} callback
+   * @param {(...args: Args) => void} [callback]
    * @param {Args} args
+   * @returns {this}
    */
   _startLayer(callback, ...args) {
     if (this.#isReady) throw new Error('');
-    callback(...args);
+    if (callback) callback(...args);
     this.#isReady = true;
+    return this;
   }
 }
 

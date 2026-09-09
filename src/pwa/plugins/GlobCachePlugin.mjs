@@ -100,7 +100,7 @@ const GlobCachePlugin = (instance, options) => {
     });
   }
 
-  return new TinyPluginLayer();
+  return new TinyPluginLayer()._startLayer();
 };
 
 export default GlobCachePlugin;
