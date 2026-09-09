@@ -25,15 +25,15 @@ import TinyServiceWorkerEngine from '../TinyServiceWorkerEngine.mjs';
  */
 
 class TinySwTabsLayer extends TinyPluginLayer {
-  /** @type {Set<TabInstance>} */
-  static #instances = new Set();
+  /** @type {Map<number, TabInstance>} */
+  static #instances = new Map();
+  static #lastIndex = -1;
 
   /** @type {number} */
   #key;
-
   /** @type {TabInstance} */
   #tabs = new Map();
-
+  /** @type {boolean} */
   #layersStarted = false;
 
   /**
@@ -41,7 +41,7 @@ class TinySwTabsLayer extends TinyPluginLayer {
    * @returns {Record<string, TabInfo>|null}
    */
   static getTabsInstance(key) {
-    const instance = [...TinySwTabsLayer.#instances][key];
+    const instance = TinySwTabsLayer.#instances.get(key);
     if (!instance) return null;
 
     /** @type {Record<string, TabInfo>} */
@@ -58,7 +58,7 @@ class TinySwTabsLayer extends TinyPluginLayer {
    * @returns {TabInfo|null}
    */
   getTab(id) {
-    const instance = [...TinySwTabsLayer.#instances][this.#key];
+    const instance = TinySwTabsLayer.#instances.get(this.#key);
     if (!instance) throw new Error('');
     const tab = instance.get(id);
     if (!tab) return null;
@@ -76,8 +76,9 @@ class TinySwTabsLayer extends TinyPluginLayer {
 
   constructor() {
     super();
-    TinySwTabsLayer.#instances.add(this.#tabs);
-    this.#key = this.#tabs.size - 1;
+    TinySwTabsLayer.#lastIndex++;
+    TinySwTabsLayer.#instances.set(TinySwTabsLayer.#lastIndex, this.#tabs);
+    this.#key = TinySwTabsLayer.#lastIndex;
   }
 }
 
