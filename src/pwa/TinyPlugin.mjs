@@ -64,6 +64,11 @@ const checkDestroy = createCheckDestroyed('TinyPlugin');
  * @typedef {import('tiny-essentials/libs/tools/TinyDebugger').DebuggerConstructor} DebuggerConstructor
  */
 
+/**
+ * Represents the isolated runtime environment or state container for a plugin.
+ * It manages the 'ready' state to ensure the plugin's initialization logic
+ * is only executed once.
+ */
 class TinyPluginLayer {
   #isReady = false;
   /**
@@ -243,9 +248,10 @@ class TinyPlugin extends TinyDebugger {
    * @param {TinyPluginInstaller<ExternalEngine, ExternalLayer, ExternalIdString, ExternalVersionString, ExternalOptions>} plugin - The plugin instance to be registered.
    * @param {ExternalOptions} options - Configuration options for the plugin.
    * @returns {TinyPlugin<ExternalEngine, ExternalLayer, ExternalIdString, ExternalVersionString, ExternalOptions>} - The plugin instance.
+   * @throws {TypeError} If the provided engine is not an instance of TinyPluginCore.
    */
   static addModuleToCore(engine, plugin, ...options) {
-    if (!(engine instanceof TinyPluginCore)) throw new Error('');
+    if (!(engine instanceof TinyPluginCore)) throw new TypeError('The provided engine must be an instance of TinyPluginCore.');
     /** @type {TinyPlugin<ExternalEngine, ExternalLayer, ExternalIdString, ExternalVersionString, ExternalOptions>} */
     const instance = new TinyPlugin(
       { engine: engine, installer: plugin, logCfg: { ...TinyPlugin.#logCfg } },
