@@ -533,8 +533,8 @@ class TinyPlugin extends TinyDebugger {
             `Security Error: Access to property "${String(prop)}" is denied by the sandbox.`,
           );
         }
-        // @ts-ignore
-        return target[prop];
+        const value = Reflect.get(target, prop, target);
+        return typeof value === 'function' ? value.bind(target) : value;
       },
       set(target, prop, newValue) {
         if (blockedEditKeys.includes(prop)) {
@@ -543,9 +543,7 @@ class TinyPlugin extends TinyDebugger {
             'Security Error: Cannot modify read-only properties on the plugin sandbox.',
           );
         }
-        // @ts-ignore
-        target[prop] = newValue;
-        return true;
+        return Reflect.set(target, prop, newValue);
       },
       // Ensure the prototype is protected
       setPrototypeOf() {
@@ -605,8 +603,8 @@ class TinyPlugin extends TinyDebugger {
     return new Proxy(this, {
       get(target, prop) {
         if (allowedGetKeys.includes(prop)) {
-          // @ts-ignore
-          return target[prop];
+          const value = Reflect.get(target, prop, target);
+          return typeof value === 'function' ? value.bind(target) : value;
         }
         // Prevent access to blocked private/internal methods
         throw new Error(
@@ -615,9 +613,7 @@ class TinyPlugin extends TinyDebugger {
       },
       set(target, prop, newValue) {
         if (allowedEditKeys.includes(prop)) {
-          // @ts-ignore
-          target[prop] = newValue;
-          return true;
+          return Reflect.set(target, prop, newValue);
         }
         // Prevent the plugin from modifying blocked properties on the sandbox
         throw new Error(
