@@ -1,6 +1,7 @@
 import TinyServiceWorkerEngine from './TinyServiceWorkerEngine.mjs';
 import RegisterGlobCachePlugin from './plugins/GlobCachePlugin.mjs';
 import ViteFileDetectorPlugin from './plugins/ViteFileDetector.mjs';
+import TinyTabManagerPlugin from './plugins/TabManager.mjs';
 
 const { isNavigate } = TinyServiceWorkerEngine;
 
@@ -16,6 +17,7 @@ export const tinySw = new TinyServiceWorkerEngine(MY_CONFIG, {
 });
 
 // Install plugins
+tinySw.installPlugin(TinyTabManagerPlugin);
 tinySw.installPlugin(ViteFileDetectorPlugin);
 tinySw.installPlugin(RegisterGlobCachePlugin, {
   patterns: ['**/*.{js,css,html,ico,jpg,png,svg}'],

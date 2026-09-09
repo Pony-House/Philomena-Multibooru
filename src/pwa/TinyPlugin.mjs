@@ -179,8 +179,10 @@ class TinyPlugin {
     /** @type {TinyPlugin<ExternalEngine, ExternalLayer, ExternalIdString, ExternalVersionString, ExternalOptions>} */
     const instance = new TinyPlugin({ engine: engine, installer: plugin }, ...options);
     instance.start();
+    // @ts-ignore
     if (engine.hasPlugin(instance))
       throw new Error(`A plugin with the name "${instance.id}" is already registered.`);
+    // @ts-ignore
     engine._addPlugin(instance);
     return instance;
   }
