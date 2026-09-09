@@ -61,7 +61,19 @@ import TinyVersion from 'tiny-essentials/libs/plugin/TinyVersion';
  * @typedef {import('tiny-essentials/libs/tools/TinyDebugger').DebuggerConstructor} DebuggerConstructor
  */
 
-class TinyPluginLayer {}
+class TinyPluginLayer {
+  #isReady = false;
+  /**
+   * @template {any[]} Args
+   * @param {(...args: Args) => void} callback
+   * @param {Args} args
+   */
+  _startLayer(callback, ...args) {
+    if (this.#isReady) throw new Error('');
+    callback(...args);
+    this.#isReady = true;
+  }
+}
 
 /**
  * The core engine class responsible for managing the plugin lifecycle and registry.

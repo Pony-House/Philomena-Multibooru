@@ -33,8 +33,6 @@ class TinySwTabsLayer extends TinyPluginLayer {
   #key;
   /** @type {TabInstance} */
   #tabs = new Map();
-  /** @type {boolean} */
-  #layersStarted = false;
 
   /**
    * @param {number} key
@@ -69,9 +67,7 @@ class TinySwTabsLayer extends TinyPluginLayer {
    * @param {(tabs: TabInstance) => void} callback
    */
   _start(callback) {
-    if (this.#layersStarted) throw new Error('');
-    callback(this.#tabs);
-    this.#layersStarted = true;
+    return this._startLayer(callback, this.#tabs);
   }
 
   constructor() {
