@@ -514,7 +514,13 @@ class TinyPlugin extends TinyDebugger {
   get engine() {
     checkDestroy(this.#isDestroyed);
     /** @type {(string|symbol)[]} */
-    const blockedGetKeys = ['getPlugin', 'plugins', 'installPlugin', '_addPlugin', 'destroyPlugins'];
+    const blockedGetKeys = [
+      'getPlugin',
+      'plugins',
+      'installPlugin',
+      '_addPlugin',
+      'destroyPlugins',
+    ];
 
     /** @type {(string|symbol)[]} */
     const blockedEditKeys = [...blockedGetKeys];
@@ -576,12 +582,11 @@ class TinyPlugin extends TinyDebugger {
    */
   #createSandbox() {
     /** @type {(string|symbol)[]} */
+    const allowedEditKeys = ['id', 'version', 'description', 'authors', 'contributors'];
+
+    /** @type {(string|symbol)[]} */
     const allowedGetKeys = [
-      'id',
-      'description',
-      'authors',
-      'contributors',
-      'version',
+      ...allowedEditKeys,
       'tinyVersion',
       'isReady',
       'layer',
@@ -594,9 +599,6 @@ class TinyPlugin extends TinyDebugger {
       'getPlugin',
       'isDestroyed',
     ];
-
-    /** @type {(string|symbol)[]} */
-    const allowedEditKeys = ['id', 'version', 'description', 'authors', 'contributors'];
 
     return new Proxy(this, {
       get(target, prop) {
