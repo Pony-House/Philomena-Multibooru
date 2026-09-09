@@ -255,7 +255,8 @@ class TinyPlugin extends TinyDebugger {
    * @throws {TypeError} If the provided engine is not an instance of TinyPluginCore.
    */
   static addModuleToCore(engine, plugin, ...options) {
-    if (!(engine instanceof TinyPluginCore)) throw new TypeError('The provided engine must be an instance of TinyPluginCore.');
+    if (!(engine instanceof TinyPluginCore))
+      throw new TypeError('The provided engine must be an instance of TinyPluginCore.');
     /** @type {TinyPlugin<ExternalEngine, ExternalLayer, ExternalIdString, ExternalVersionString, ExternalOptions>} */
     const instance = new TinyPlugin(
       { engine: engine, installer: plugin, logCfg: { ...TinyPlugin.#logCfg } },
@@ -531,19 +532,102 @@ class TinyPlugin extends TinyDebugger {
   }
 
   /**
+   * Creates a secure proxy to restrict plugin access to the host.
+   * This prevents the plugin from accessing the 'engine' or mutating the plugin instance.
+   */
+  #createSandbox() {
+    /** @type {(string|symbol)[]} */
+    const allowedGetKeys = [
+      'id',
+      'description',
+      'authors',
+      'contributors',
+      'version',
+      'tinyVersion',
+      'isReady',
+      'layer',
+      'options',
+      'engine',
+      'isDestroyed',
+      'pluginsSize', 
+      'hasPlugin',
+    ];
+
+    /** @type {(string|symbol)[]} */
+    const allowedEditKeys = [
+      'id',
+      'version',
+      'description',
+      'authors',
+      'contributors',
+    ];
+
+    return new Proxy(this, {
+      get(target, prop) {
+        if (allowedGetKeys.includes(prop)) {
+          return target[prop];
+        }
+        // Prevent access to 'engine', 'destroy', or any private/internal methods
+        throw new Error(
+          `Security Error: Access to property "${String(prop)}" is denied by the sandbox.`,
+        );
+      },
+      set(target, prop, newValue) {
+        // @ts-ignore
+        if (allowedEditKeys.includes(prop)) {
+          target[prop] = newValue;
+          return true;
+        }
+        // Prevent the plugin from modifying any properties on the sandbox
+        throw new Error(
+          'Security Error: Cannot modify read-only properties on the plugin sandbox.',
+        );
+      },
+      // Ensure the prototype is protected
+      setPrototypeOf() {
+        throw new Error('Security Error: Prototype manipulation is forbidden.');
+      },
+    });
+  }
+
+  /**
    * Starts the plugin lifecycle by calling the installer.
    * @throws {Error} If id, version, description, authors, contributors, or layer is not set.
    */
   start() {
     checkDestroy(this.#isDestroyed);
     if (this.#isReady) throw new Error('Plugin is already ready.');
-    this.#layer = this.#installer(this, ...this.#options);
-    if (!(this.#layer instanceof TinyPluginLayer)) throw new Error('Plugin layer is not set.');
-    if (this.#id.length === 0) throw new Error('Plugin id is not set.');
-    if (this.#description.length === 0) throw new Error('Plugin description is not set.');
-    if (this.#authors.length === 0) throw new Error('Plugin authors is not set.');
-    if (this.#contributors.length === 0) throw new Error('Plugin contributors is not set.');
-    if (!this.#version) throw new Error('Plugin version is not set.');
+
+    // 1. Freeze options to prevent mutation of the configuration object
+    if (this.#options) {
+      Object.freeze(this.#options);
+    }
+
+    // 2. Create a sandboxed version of 'this' to pass to the installer
+    const sandbox = this.#createSandbox();
+
+    try {
+      // 3. Execute installer with the sandbox and frozen options
+      this.#layer = this.#installer(sandbox, ...this.#options);
+
+      if (!(this.#layer instanceof TinyPluginLayer)) {
+        throw new TypeError('Plugin layer is not a valid TinyPluginLayer instance.');
+      }
+
+      // 4. Final validation of core identity
+      if (this.#id.length === 0) throw new Error('Plugin id is not set.');
+      if (this.#description.length === 0) throw new Error('Plugin description is not set.');
+      if (this.#authors.length === 0) throw new Error('Plugin authors is not set.');
+      if (this.#contributors.length === 0) throw new Error('Plugin contributors is not set.');
+      if (!this.#version) throw new Error('Plugin version is not set.');
+
+      this.#isReady = true;
+    } catch (error) {
+      // 5. Catch initialization errors to prevent host crash
+      this.emit('error', error);
+      this.destroy();
+      throw new Error(`Plugin initialization failed: ${error.message}`);
+    }
   }
 
   /**
