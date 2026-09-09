@@ -130,7 +130,6 @@ const TinyTabManagerPlugin = (instance) => {
       'tab:register',
       /**
        * Processes registration messages to add new tabs to the registry.
-       * @param {Object} msg
        */ async (msg) => {
         const { data, clientId } = msg;
 
@@ -155,7 +154,6 @@ const TinyTabManagerPlugin = (instance) => {
       'tab:update',
       /**
        * Processes update messages to refresh existing tab information.
-       * @param {Object} msg
        */ async (msg) => {
         const { data, clientId } = msg;
 
@@ -181,7 +179,6 @@ const TinyTabManagerPlugin = (instance) => {
       'tab:unregister',
       /**
        * Processes unregistration messages to remove tabs from the registry.
-       * @param {Object} msg
        */ async (msg) => {
         const { clientId } = msg;
 
@@ -197,7 +194,6 @@ const TinyTabManagerPlugin = (instance) => {
       'tab:get_list',
       /**
        * Listens for requests to retrieve the current list of all registered tabs.
-       * @param {Object} msg
        */ async (msg) => {
         const tabList = {
           count: tabs.size,
