@@ -533,6 +533,7 @@ class TinyPlugin extends TinyDebugger {
             `Security Error: Access to property "${String(prop)}" is denied by the sandbox.`,
           );
         }
+        // @ts-ignore
         return target[prop];
       },
       set(target, prop, newValue) {
@@ -542,6 +543,7 @@ class TinyPlugin extends TinyDebugger {
             'Security Error: Cannot modify read-only properties on the plugin sandbox.',
           );
         }
+        // @ts-ignore
         target[prop] = newValue;
         return true;
       },
@@ -603,6 +605,7 @@ class TinyPlugin extends TinyDebugger {
     return new Proxy(this, {
       get(target, prop) {
         if (allowedGetKeys.includes(prop)) {
+          // @ts-ignore
           return target[prop];
         }
         // Prevent access to blocked private/internal methods
@@ -612,6 +615,7 @@ class TinyPlugin extends TinyDebugger {
       },
       set(target, prop, newValue) {
         if (allowedEditKeys.includes(prop)) {
+          // @ts-ignore
           target[prop] = newValue;
           return true;
         }
@@ -663,7 +667,9 @@ class TinyPlugin extends TinyDebugger {
       // 5. Catch initialization errors to prevent host crash
       this.emit('error', error);
       this.destroy();
-      throw new Error(`Plugin initialization failed: ${error.message}`);
+      throw new Error(
+        `Plugin initialization failed: ${error instanceof Error ? error.message : 'Unknown Error'}`,
+      );
     }
   }
 
