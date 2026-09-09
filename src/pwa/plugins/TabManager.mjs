@@ -62,10 +62,13 @@ class TinySwTabsLayer extends TinyPluginLayer {
    * Retrieves the information for a specific tab by its unique ID.
    * @param {string} id
    * @returns {TabInfo|null}
+   * @throws {ReferenceError} If the internal layer instance cannot be found in the registry.
    */
   getTab(id) {
     const instance = TinySwTabsLayer.#instances.get(this.#key);
-    if (!instance) throw new Error('');
+    if (!instance) {
+      throw new ReferenceError('[TinySwTabsLayer] Instance not found for the current key.');
+    }
     const tab = instance.get(id);
     if (!tab) return null;
     return { ...tab };
