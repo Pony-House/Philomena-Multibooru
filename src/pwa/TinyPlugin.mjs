@@ -1,3 +1,4 @@
+import { isJsonObject } from 'tiny-essentials/basics/objChecker';
 import TinyDebugger from 'tiny-essentials/libs/tools/TinyDebugger';
 import TinyVersion from 'tiny-essentials/libs/plugin/TinyVersion';
 import { createCheckDestroyed } from 'tiny-essentials/libs/utils/tools';
@@ -87,11 +88,31 @@ class TinyPluginLayer {
 }
 
 /**
+ * @typedef {Object} BlackListCore
+ * @property {string[]} get
+ * @property {string[]} set
+ */
+
+/**
+ * @typedef {Object} BlackListCorePartial
+ * @property {string[]} [get]
+ * @property {string[]} [set]
+ */
+
+/**
+ * @typedef {Object} BlackListCoreProtected
+ * @property {Readonly<string[]>} get
+ * @property {Readonly<string[]>} set
+ */
+
+/**
  * The core engine class responsible for managing the plugin lifecycle and registry.
  * It extends TinyDebugger to provide debugging capabilities alongside plugin management.
  */
 class TinyPluginCore extends TinyDebugger {
   static #pluginsDestroyEventName = 'pluginsDestroyed';
+  /** @type {BlackListCore} */
+  #sandboxBlacklist = { get: [], set: [] };
 
   /**
    * Gets the event name used when all plugins are destroyed.
@@ -115,6 +136,17 @@ class TinyPluginCore extends TinyDebugger {
   #plugins = new Map();
 
   /**
+   * Gets the blacklist of restricted keys for the engine.
+   * @returns {BlackListCoreProtected} A read-only array of restricted keys.
+   */
+  get sandboxBlacklist() {
+    return Object.freeze({
+      set: Object.freeze([...this.#sandboxBlacklist.set]),
+      get: Object.freeze([...this.#sandboxBlacklist.get]),
+    });
+  }
+
+  /**
    * Returns a plain object representation of the registered plugins.
    * This converts the internal Map into a standard object, providing a snapshot
    * of the plugins for easier external access.
@@ -134,10 +166,32 @@ class TinyPluginCore extends TinyDebugger {
 
   /**
    * Initializes a new instance of the TinyPluginCore class.
-   * @param {DebuggerConstructor} ops - The configuration options for the debugger base class.
+   * @param {Object} ops - The configuration options for the debugger base class.
+   * @param {BlackListCorePartial} [ops.sandboxBlacklist] - A list of keys to be blacklisted from the engine proxy.
+   * @param {DebuggerConstructor} ops.logCfg - The configuration options for the debugger base class.
    */
   constructor(ops) {
-    super(ops);
+    super(ops.logCfg);
+    if (ops?.sandboxBlacklist) {
+      /**
+       * @param {string} key
+       * @param {string[]} values
+       */
+      const checkBlackList = (key, values) => {
+        if (!Array.isArray(values) || !values.every((k) => typeof k === 'string')) {
+          throw new TypeError(`The ${key} of sandbox blacklist must be an array of strings.`);
+        }
+      };
+
+      if (isJsonObject(ops.sandboxBlacklist)) {
+        if (typeof ops.sandboxBlacklist.get !== 'undefined') checkBlackList('get', ops.sandboxBlacklist.get);
+        if (typeof ops.sandboxBlacklist.set !== 'undefined') checkBlackList('set', ops.sandboxBlacklist.set);
+        this.#sandboxBlacklist = {
+          get: [...(ops.sandboxBlacklist.get ?? [])],
+          set: [...(ops.sandboxBlacklist.set ?? [])],
+        };
+      }
+    }
   }
 
   /**
@@ -509,10 +563,12 @@ class TinyPlugin extends TinyDebugger {
 
   /**
    * Gets the engine instance associated with this plugin.
+   * The engine is proxied to prevent unauthorized access to internal methods.
    * @returns {Engine} The engine instance.
    */
   get engine() {
     checkDestroy(this.#isDestroyed);
+    const coreBlacklist = this.#engine.sandboxBlacklist ?? { get: {}, set: {} };
     /** @type {(string|symbol)[]} */
     const blockedGetKeys = [
       'getPlugin',
@@ -520,10 +576,11 @@ class TinyPlugin extends TinyDebugger {
       'installPlugin',
       '_addPlugin',
       'destroyPlugins',
+      ...coreBlacklist.get,
     ];
 
     /** @type {(string|symbol)[]} */
-    const blockedEditKeys = [...blockedGetKeys];
+    const blockedEditKeys = [...blockedGetKeys, ...coreBlacklist.set];
 
     return new Proxy(this.#engine, {
       get(target, prop) {
@@ -562,6 +619,16 @@ class TinyPlugin extends TinyDebugger {
   }
 
   /**
+   * Gets the blacklist of restricted keys from the engine.
+   * This is accessible within the plugin's sandbox for inspection.
+   * @returns {BlackListCoreProtected} The blacklist.
+   */
+  get engineBlacklist() {
+    checkDestroy(this.#isDestroyed);
+    return this.#engine.sandboxBlacklist;
+  }
+
+  /**
    * Initializes a new instance of TinyPlugin.
    * @param {Object} config - The configuration object.
    * @param {Engine} config.engine - The engine instance.
@@ -592,6 +659,7 @@ class TinyPlugin extends TinyDebugger {
       'layer',
       'options',
       'engine',
+      'engineBlacklist',
       'isDestroyed',
       'pluginsSize',
       'plugins',

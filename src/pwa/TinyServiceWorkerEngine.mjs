@@ -860,10 +860,12 @@ class TinyServiceWorkerEngine extends TinyPluginCore {
    */
   constructor(config = {}, lgConfig = {}) {
     super({
-      id: '[_blue_TinySW-Engine_reset_]',
-      logger: lgConfig.logger ?? console,
-      debugMode: lgConfig.debugMode ?? false,
-      useLogColors: lgConfig.useLogColors ?? false,
+      logCfg: {
+        id: '[_blue_TinySW-Engine_reset_]',
+        logger: lgConfig.logger ?? console,
+        debugMode: lgConfig.debugMode ?? false,
+        useLogColors: lgConfig.useLogColors ?? false,
+      },
     });
     this.#updateConfig(config);
   }
