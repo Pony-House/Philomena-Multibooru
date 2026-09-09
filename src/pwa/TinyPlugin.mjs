@@ -67,10 +67,11 @@ const checkDestroy = createCheckDestroyed('TinyPlugin');
 class TinyPluginLayer {
   #isReady = false;
   /**
-   * @template {any[]} Args
-   * @param {(...args: Args) => void} [callback]
-   * @param {Args} args
-   * @returns {this}
+   * Internal method to initialize the layer state.
+   * @template {any[]} Args - The type of arguments passed to the callback.
+   * @param {(...args: Args) => void} [callback] - An optional callback function to execute during initialization.
+   * @param {Args} args - The arguments to be passed to the callback.
+   * @returns {this} - The current instance of TinyPluginLayer.
    */
   _startLayer(callback, ...args) {
     if (this.#isReady) throw new Error('');
@@ -87,13 +88,21 @@ class TinyPluginLayer {
 class TinyPluginCore extends TinyDebugger {
   static #pluginsDestroyEventName = 'pluginsDestroyed';
 
+  /**
+   * Gets the event name used when all plugins are destroyed.
+   * @returns {string} The event name.
+   */
   static get pluginsDestroyEventName() {
     return TinyPluginCore.pluginsDestroyEventName;
   }
 
+  /**
+   * Sets the event name used when all plugins are destroyed.
+   * @param {string} value - The new event name.
+   * @throws {TypeError} If the value is not a string.
+   */
   static set pluginsDestroyEventName(value) {
-    if (typeof value !== 'string')
-      throw new TypeError('pluginsDestroyEventName must be a string.');
+    if (typeof value !== 'string') throw new TypeError('pluginsDestroyEventName must be a string.');
     TinyPluginCore.pluginsDestroyEventName = value;
   }
 
@@ -137,10 +146,10 @@ class TinyPluginCore extends TinyDebugger {
 
   /**
    * Installs a new plugin into the engine and starts its lifecycle.
-   * @template {TinyPluginLayer} Layer
-   * @template {string} Id
-   * @template {string} Version
-   * @template {any[]} Options
+   * @template {TinyPluginLayer} Layer - The type of the plugin layer.
+   * @template {string} Id - The type of the plugin ID.
+   * @template {string} Version - The type of the plugin version.
+   * @template {any[]} Options - The type of the configuration options.
    * @param {TinyPluginInstaller<this, Layer, Id, Version, Options>} plugin - The plugin instance to be registered.
    * @param {Options} options - Configuration options for the plugin.
    * @returns {TinyPlugin<this, Layer, Id, Version, Options>} The newly installed plugin instance.
@@ -151,8 +160,7 @@ class TinyPluginCore extends TinyDebugger {
 
   /**
    * Checks if a specific plugin is already registered in the engine's internal registry.
-   *
-   * @param {TinyPlugin<this, TinyPluginLayer, string, string, any[]>|string} plugin - The plugin instance to check.
+   * @param {TinyPlugin<this, TinyPluginLayer, string, string, any[]>|string} plugin - The plugin instance or ID to check.
    * @returns {boolean} True if the plugin is registered, false otherwise.
    */
   hasPlugin(plugin) {
@@ -168,6 +176,9 @@ class TinyPluginCore extends TinyDebugger {
     return this.#plugins.get(key);
   }
 
+  /**
+   * Destroys all registered plugins and emits the destruction event.
+   */
   destroyPlugins() {
     this.#plugins.forEach((plugin) => plugin.destroy());
     this.emit(TinyPluginCore.#pluginsDestroyEventName);
@@ -205,22 +216,29 @@ class TinyPlugin extends TinyDebugger {
     useLogColors: true,
   };
 
-  /** @returns {DebuggerConstructor} */
+  /**
+   * Gets the logging configuration for the TinyPlugin class.
+   * @returns {DebuggerConstructor} The current logging configuration.
+   */
   static get logCfg() {
     return { ...TinyPlugin.#logCfg };
   }
 
+  /**
+   * Sets the logging configuration for the TinyPlugin class.
+   * @param {DebuggerConstructor} value - The new logging configuration.
+   */
   static set logCfg(value) {
     this.#logCfg = value;
   }
 
   /**
    * Installs a new plugin into a engine and starts its lifecycle.
-   * @template {TinyPluginCore} ExternalEngine
-   * @template {TinyPluginLayer} ExternalLayer
-   * @template {string} ExternalIdString
-   * @template {string} ExternalVersionString
-   * @template {any[]} ExternalOptions
+   * @template {TinyPluginCore} ExternalEngine - The type of the engine.
+   * @template {TinyPluginLayer} ExternalLayer - The type of the plugin layer.
+   * @template {string} ExternalIdString - The type of the plugin ID.
+   * @template {string} ExternalVersionString - The type of the plugin version.
+   * @template {any[]} ExternalOptions - The type of the configuration options.
    * @param {ExternalEngine} engine - The main instance connected to plugin.
    * @param {TinyPluginInstaller<ExternalEngine, ExternalLayer, ExternalIdString, ExternalVersionString, ExternalOptions>} plugin - The plugin instance to be registered.
    * @param {ExternalOptions} options - Configuration options for the plugin.
@@ -266,11 +284,18 @@ class TinyPlugin extends TinyDebugger {
   /** @type {boolean} */
   #isDestroyed = false;
 
+  /**
+   * Gets whether the plugin has been destroyed.
+   * @returns {boolean} True if destroyed, false otherwise.
+   */
   get isDestroyed() {
     return this.#isDestroyed;
   }
 
-  /** @returns {Layer} */
+  /**
+   * Gets the plugin's layer instance.
+   * @returns {Layer} The plugin layer.
+   */
   get layer() {
     checkDestroy(this.#isDestroyed);
     if (this.#layer === null) throw new Error('Plugin layer is not set.');
@@ -484,7 +509,7 @@ class TinyPlugin extends TinyDebugger {
    * Initializes a new instance of TinyPlugin.
    * @param {Object} config - The configuration object.
    * @param {Engine} config.engine - The engine instance.
-   * @param {DebuggerConstructor} config.logCfg
+   * @param {DebuggerConstructor} config.logCfg - The logging configuration.
    * @param {TinyPluginInstaller<Engine, Layer, IdString, VersionString, Options>} config.installer - The installer function.
    * @param {Options} ops - Additional configuration options.
    */
@@ -497,7 +522,7 @@ class TinyPlugin extends TinyDebugger {
 
   /**
    * Starts the plugin lifecycle by calling the installer.
-   * @throws {Error} If id or version are not set.
+   * @throws {Error} If id, version, description, authors, contributors, or layer is not set.
    */
   start() {
     checkDestroy(this.#isDestroyed);
@@ -511,6 +536,9 @@ class TinyPlugin extends TinyDebugger {
     if (!this.#version) throw new Error('Plugin version is not set.');
   }
 
+  /**
+   * Destroys the plugin instance.
+   */
   destroy() {
     if (this.#isDestroyed) return;
     this.emit('destroyed');
