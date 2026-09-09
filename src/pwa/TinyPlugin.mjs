@@ -192,12 +192,16 @@ class TinyPluginCore extends TinyDebugger {
 
 /**
  * A function used to install a plugin into the engine.
- * @template {TinyPluginCore} Engine
- * @template {TinyPluginLayer} Layer
- * @template {string} IdString
- * @template {string} VersionString
- * @template {any[]} Options
- * @typedef { (plugin: TinyPlugin<Engine, Layer, IdString, VersionString, Options>, ...options: Options) => Layer } TinyPluginInstaller
+ * This function is responsible for the actual initialization logic of the plugin,
+ * setting up its layer and validating its configuration.
+ *
+ * @template {TinyPluginCore} Engine - The type of the engine instance.
+ * @template {TinyPluginLayer} Layer - The type of the layer returned by the installer.
+ * @template {string} IdString - The type of the plugin's unique identifier.
+ * @template {string} VersionString - The type of the plugin's version.
+ * @template {any[]} Options - The type of the configuration options.
+ *
+ * @typedef { (plugin: TinyPlugin<Engine, Layer, IdString, VersionString, Options>, ...options: Options) => Layer } TinyPluginInstaller - The plugin instance being initialized.
  */
 
 /**
