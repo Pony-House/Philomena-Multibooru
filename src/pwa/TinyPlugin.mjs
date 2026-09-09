@@ -194,8 +194,8 @@ class TinyPluginCore extends TinyDebugger {
         if (typeof ops.sandboxBlacklist.set !== 'undefined')
           checkBlackList('set', ops.sandboxBlacklist.set);
         this.#sandboxBlacklist = {
-          get: [...(ops.sandboxBlacklist.get ?? [])],
-          set: [...(ops.sandboxBlacklist.set ?? [])],
+          get: [...new Set([...(ops.sandboxBlacklist.get ?? [])])],
+          set: [...new Set([...(ops.sandboxBlacklist.set ?? [])])],
         };
       }
     }
@@ -679,7 +679,10 @@ class TinyPlugin extends TinyDebugger {
     /** @type {BlackListValue[]} */
     const blockedEditKeys = [...blockedGetKeys, ...coreBlacklist.set];
 
-    this.#sandboxBlacklist = { get: blockedGetKeys, set: blockedEditKeys };
+    this.#sandboxBlacklist = {
+      get: [...new Set(blockedGetKeys)],
+      set: [...new Set(blockedEditKeys)],
+    };
 
     return new Proxy(this, {
       get(target, prop) {
