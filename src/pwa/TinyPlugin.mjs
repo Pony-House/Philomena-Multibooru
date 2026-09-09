@@ -182,6 +182,15 @@ class TinyPluginCore extends TinyDebugger {
   }
 
   /**
+   * Retrieves a plugin instance by its unique identifier (SANDBOX MODE).
+   * @param {string} key - The unique identifier of the plugin to retrieve.
+   * @returns {TinyPlugin<this, TinyPluginLayer, string, string, any[]>|undefined} The plugin instance if found, otherwise undefined.
+   */
+  _getPlugin(key) {
+    return this.#plugins.get(key);
+  }
+
+  /**
    * Destroys all registered plugins and emits the destruction event.
    */
   destroyPlugins() {
@@ -315,11 +324,11 @@ class TinyPlugin extends TinyDebugger {
 
   /**
    * Gets the plugins object from the engine.
-   * @returns {Record<string, TinyPlugin<Engine, TinyPluginLayer, string, string, any[]>>} The plugins object from the engine.
+   * @returns {string[]} The plugins object from the engine.
    */
   get plugins() {
     checkDestroy(this.#isDestroyed);
-    return this.#engine.plugins;
+    return Object.keys(this.#engine.plugins);
   }
 
   /**
@@ -338,7 +347,7 @@ class TinyPlugin extends TinyDebugger {
    */
   getPlugin(id) {
     checkDestroy(this.#isDestroyed);
-    return this.#engine.getPlugin(id);
+    return this.#engine._getPlugin(id);
   }
 
   /**
@@ -504,7 +513,37 @@ class TinyPlugin extends TinyDebugger {
    */
   get engine() {
     checkDestroy(this.#isDestroyed);
-    return this.#engine;
+    /** @type {(string|symbol)[]} */
+    const blockedGetKeys = ['getPlugin', 'plugins', 'installPlugin', '_addPlugin', 'destroyPlugins'];
+
+    /** @type {(string|symbol)[]} */
+    const blockedEditKeys = [...blockedGetKeys];
+
+    return new Proxy(this.#engine, {
+      get(target, prop) {
+        if (blockedGetKeys.includes(prop)) {
+          // Prevent access to blocked private/internal methods
+          throw new Error(
+            `Security Error: Access to property "${String(prop)}" is denied by the sandbox.`,
+          );
+        }
+        return target[prop];
+      },
+      set(target, prop, newValue) {
+        if (blockedEditKeys.includes(prop)) {
+          // Prevent the plugin from modifying blocked properties on the sandbox
+          throw new Error(
+            'Security Error: Cannot modify read-only properties on the plugin sandbox.',
+          );
+        }
+        target[prop] = newValue;
+        return true;
+      },
+      // Ensure the prototype is protected
+      setPrototypeOf() {
+        throw new Error('Security Error: Prototype manipulation is forbidden.');
+      },
+    });
   }
 
   /**
@@ -549,36 +588,32 @@ class TinyPlugin extends TinyDebugger {
       'options',
       'engine',
       'isDestroyed',
-      'pluginsSize', 
+      'pluginsSize',
+      'plugins',
       'hasPlugin',
+      'getPlugin',
+      'isDestroyed',
     ];
 
     /** @type {(string|symbol)[]} */
-    const allowedEditKeys = [
-      'id',
-      'version',
-      'description',
-      'authors',
-      'contributors',
-    ];
+    const allowedEditKeys = ['id', 'version', 'description', 'authors', 'contributors'];
 
     return new Proxy(this, {
       get(target, prop) {
         if (allowedGetKeys.includes(prop)) {
           return target[prop];
         }
-        // Prevent access to 'engine', 'destroy', or any private/internal methods
+        // Prevent access to blocked private/internal methods
         throw new Error(
           `Security Error: Access to property "${String(prop)}" is denied by the sandbox.`,
         );
       },
       set(target, prop, newValue) {
-        // @ts-ignore
         if (allowedEditKeys.includes(prop)) {
           target[prop] = newValue;
           return true;
         }
-        // Prevent the plugin from modifying any properties on the sandbox
+        // Prevent the plugin from modifying blocked properties on the sandbox
         throw new Error(
           'Security Error: Cannot modify read-only properties on the plugin sandbox.',
         );
