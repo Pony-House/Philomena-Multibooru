@@ -481,16 +481,53 @@ class TinyPluginCore extends TinyDebugger {
    * @returns {TinyPlugin<this, TinyPluginLayer, string, string, any[]>|undefined} The plugin instance if found, otherwise undefined.
    */
   getPlugin(key) {
-    return this.#plugins.get(key);
+    const plugin = this.#plugins.get(key);
+    return plugin && !plugin.isDestroyed ? plugin : undefined;
   }
 
   /**
-   * Retrieves a plugin instance by its unique identifier (SANDBOX MODE).
-   * @param {string} key - The unique identifier of the plugin to retrieve.
-   * @returns {TinyPlugin<this, TinyPluginLayer, string, string, any[]>|undefined} The plugin instance if found, otherwise undefined.
+   * Retrieves a plugin instance by its unique identifier with security enforcement.
+   * This method checks the target plugin's identity against the engine's
+   * access control rules (whitelist/blacklist/cryptographic).
+   *
+   * @param {string} targetId - The unique identifier of the target plugin.
+   * @returns {TinyPlugin<this, TinyPluginLayer, string, string, any[]>|undefined} The plugin instance if access is granted, otherwise undefined.
    */
-  _getPlugin(key) {
-    return this.#plugins.get(key);
+  _getPlugin(targetId) {
+    const plugin = this.#plugins.get(targetId);
+
+    // If the plugin doesn't exist or has been destroyed, it is not available.
+    if (!plugin || plugin.isDestroyed) {
+      return undefined;
+    }
+
+    const { mode, whitelist, blacklist } = this.#accessControl;
+
+    // If mode is 'none', access is granted to all registered plugins by default.
+    if (mode === 'none') {
+      return plugin;
+    }
+
+    // Whitelist mode: Only plugins whose ID or authors match the whitelist are returned.
+    if (mode === 'whitelist') {
+      const isIdAllowed = whitelist.ids.has(targetId);
+      const isAuthorAllowed = plugin.authors.some((author) => whitelist.authors.has(author));
+      return isIdAllowed || isAuthorAllowed ? plugin : undefined;
+    }
+
+    // Blacklist mode: Plugins matching the blacklist (ID or Author) are blocked.
+    if (mode === 'blacklist') {
+      const isIdBlocked = blacklist.ids.has(targetId);
+      const isAuthorBlocked = plugin.authors.some((author) => blacklist.authors.has(author));
+      return isIdBlocked || isAuthorBlocked ? undefined : plugin;
+    }
+
+    // Cryptographic mode: Only plugins that have been successfully verified are returned.
+    if (mode === 'cryptographic') {
+      return this.#verifiedPlugins.has(targetId) ? plugin : undefined;
+    }
+
+    return plugin;
   }
 
   /**
