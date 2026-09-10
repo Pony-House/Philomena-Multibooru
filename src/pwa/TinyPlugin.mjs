@@ -114,23 +114,21 @@ class TinyPluginLayer {
  */
 
 /**
- * @typedef {Object} PluginAccessControl
- * @property {'none' | 'whitelist' | 'blacklist'} mode - The operational mode for engine access control.
- * @property {BwList} whitelist
- * @property {BwList} blacklist
- */
-
-/**
  * @typedef {Object} BwListProtected
  * @property {readonly BlackListValue[]} ids
  * @property {readonly BlackListValue[]} authors
  */
 
 /**
- * @typedef {Object} PluginAccessControlProtected
- * @property {'none' | 'whitelist' | 'blacklist'} mode - The operational mode for engine access control.
- * @property {Readonly<BwListProtected>} whitelist
- * @property {Readonly<BwListProtected>} blacklist
+ * The operational mode for engine access control.
+ * @typedef {'none' | 'whitelist' | 'blacklist'} PluginAccessControlMode
+ */
+
+/**
+ * @typedef {Object} PluginAccessControl
+ * @property {PluginAccessControlMode} mode
+ * @property {BwList} whitelist
+ * @property {BwList} blacklist
  */
 
 /**
@@ -200,21 +198,33 @@ class TinyPluginCore extends TinyDebugger {
   }
 
   /**
-   * Gets the current engine access control configuration.
-   * @returns {Readonly<PluginAccessControlProtected>}
+   * Gets the current engine access control whitelist.
+   * @returns {BwListProtected}
    */
-  get accessControl() {
+  get accessControlWhitelist() {
     return Object.freeze({
-      mode: this.#accessControl.mode,
-      whitelist: Object.freeze({
-        ids: Object.freeze([...this.#accessControl.whitelist.ids]),
-        authors: Object.freeze([...this.#accessControl.whitelist.authors]),
-      }),
-      blacklist: Object.freeze({
-        ids: Object.freeze([...this.#accessControl.blacklist.ids]),
-        authors: Object.freeze([...this.#accessControl.blacklist.authors]),
-      }),
+      ids: Object.freeze([...this.#accessControl.whitelist.ids]),
+      authors: Object.freeze([...this.#accessControl.whitelist.authors]),
     });
+  }
+
+  /**
+   * Gets the current engine access control blacklist.
+   * @returns {BwListProtected}
+   */
+  get accessControlBlacklist() {
+    return Object.freeze({
+      ids: Object.freeze([...this.#accessControl.blacklist.ids]),
+      authors: Object.freeze([...this.#accessControl.blacklist.authors]),
+    });
+  }
+
+  /**
+   * Gets the current engine access control mode.
+   * @returns {PluginAccessControlMode}
+   */
+  get accessControlMode() {
+    return this.#accessControl.mode;
   }
 
   /**
@@ -790,7 +800,9 @@ class TinyPlugin extends TinyDebugger {
     const blockedEditKeys = [
       ...blockedGetKeys,
       ...coreBlacklist.set,
-      'accessControl',
+      'accessControlMode',
+      'accessControlWhitelist',
+      'accessControlBlacklist',
       'canAccessEngine',
     ];
 
