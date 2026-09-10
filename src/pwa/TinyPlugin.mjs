@@ -1,3 +1,4 @@
+import { verify } from 'crypto';
 import { isJsonObject } from 'tiny-essentials/basics/objChecker';
 import TinyDebugger from 'tiny-essentials/libs/tools/TinyDebugger';
 import TinyVersion from 'tiny-essentials/libs/plugin/TinyVersion';
@@ -121,7 +122,16 @@ class TinyPluginLayer {
 
 /**
  * The operational mode for engine access control.
- * @typedef {'none' | 'whitelist' | 'blacklist'} PluginAccessControlMode
+ * @typedef {'none' | 'whitelist' | 'blacklist' | 'cryptographic'} PluginAccessControlMode
+ */
+
+/**
+ * @typedef {Object} PluginAccessControlPartial
+ * @property {PluginAccessControlMode} mode
+ * @property {BwList} [whitelist]
+ * @property {BwList} [blacklist]
+ * @property {string} [publicKey] - The public key used for cryptographic verification.
+ * @property {string} [cryptoAlgorithm='sha256']
  */
 
 /**
@@ -129,6 +139,8 @@ class TinyPluginLayer {
  * @property {PluginAccessControlMode} mode
  * @property {BwList} whitelist
  * @property {BwList} blacklist
+ * @property {string|null} publicKey - The public key used for cryptographic verification.
+ * @property {string} cryptoAlgorithm
  */
 
 /**
@@ -143,6 +155,8 @@ class TinyPluginCore extends TinyDebugger {
   /** @type {PluginAccessControl} */
   #accessControl = {
     mode: 'none',
+    cryptoAlgorithm: 'sha256',
+    publicKey: null,
     whitelist: { ids: [], authors: [] },
     blacklist: { ids: [], authors: [] },
   };
@@ -232,7 +246,7 @@ class TinyPluginCore extends TinyDebugger {
    * @param {Object} ops - The configuration options.
    * @param {DebuggerConstructor} ops.logCfg - The configuration options for the debugger.
    * @param {BlackListCorePartial} [ops.sandboxBlacklist] - A list of keys to be blacklisted.
-   * @param {PluginAccessControl} [ops.accessControl] - Configuration for identity-based engine access.
+   * @param {PluginAccessControlPartial} [ops.accessControl] - Configuration for identity-based engine access.
    */
   constructor(ops) {
     super(ops.logCfg);
@@ -260,29 +274,55 @@ class TinyPluginCore extends TinyDebugger {
     }
 
     if (isJsonObject(ops?.accessControl)) {
-      const { mode, whitelist, blacklist } = ops.accessControl;
+      const { mode, whitelist, blacklist, publicKey, cryptoAlgorithm } = ops.accessControl;
 
-      if (mode !== 'none' && mode !== 'whitelist' && mode !== 'blacklist') {
-        throw new TypeError('accessControl.mode must be "none", "whitelist", or "blacklist".');
+      if (
+        mode !== 'none' &&
+        mode !== 'whitelist' &&
+        mode !== 'blacklist' &&
+        mode !== 'cryptographic'
+      ) {
+        throw new TypeError(
+          'accessControl.mode must be "none", "whitelist", "blacklist", or "cryptographic".',
+        );
       }
 
-      if (typeof whitelist.ids !== 'undefined') checkBlackList('whitelist ids', whitelist.ids);
-      if (typeof whitelist.authors !== 'undefined')
-        checkBlackList('whistlist authors', whitelist.authors);
+      if (mode === 'cryptographic') {
+        if (typeof publicKey !== 'string') {
+          throw new TypeError(
+            'In cryptographic mode, accessControl.publicKey must be a string (PEM format).',
+          );
+        }
+        if (typeof cryptoAlgorithm !== 'string') {
+          throw new TypeError(
+            'In cryptographic mode, accessControl.cryptoAlgorithm must be a string (Crypto algorithm).',
+          );
+        }
+      }
 
-      if (typeof blacklist.ids !== 'undefined') checkBlackList('blacklist ids', blacklist.ids);
-      if (typeof blacklist.authors !== 'undefined')
-        checkBlackList('blacklist authors', blacklist.authors);
+      if (isJsonObject(whitelist)) {
+        if (typeof whitelist.ids !== 'undefined') checkBlackList('whitelist ids', whitelist.ids);
+        if (typeof whitelist.authors !== 'undefined')
+          checkBlackList('whistlist authors', whitelist.authors);
+      }
+
+      if (isJsonObject(blacklist)) {
+        if (typeof blacklist.ids !== 'undefined') checkBlackList('blacklist ids', blacklist.ids);
+        if (typeof blacklist.authors !== 'undefined')
+          checkBlackList('blacklist authors', blacklist.authors);
+      }
 
       this.#accessControl = {
-        mode: mode ?? 'none',
+        mode: typeof mode === 'string' ? mode : 'none',
+        publicKey: typeof publicKey === 'string' ? publicKey : null,
+        cryptoAlgorithm: typeof cryptoAlgorithm === 'string' ? cryptoAlgorithm : 'sha256',
         whitelist: {
-          ids: Array.isArray(whitelist.ids) ? [...new Set(whitelist.ids)] : [],
-          authors: Array.isArray(whitelist.authors) ? [...new Set(whitelist.authors)] : [],
+          ids: Array.isArray(whitelist?.ids) ? [...new Set(whitelist.ids)] : [],
+          authors: Array.isArray(whitelist?.authors) ? [...new Set(whitelist.authors)] : [],
         },
         blacklist: {
-          ids: Array.isArray(blacklist.ids) ? [...new Set(blacklist.ids)] : [],
-          authors: Array.isArray(blacklist.authors) ? [...new Set(blacklist.authors)] : [],
+          ids: Array.isArray(blacklist?.ids) ? [...new Set(blacklist.ids)] : [],
+          authors: Array.isArray(blacklist?.authors) ? [...new Set(blacklist.authors)] : [],
         },
       };
     }
@@ -292,10 +332,38 @@ class TinyPluginCore extends TinyDebugger {
    * Validates if a plugin is permitted to access the engine's properties based on identity.
    * @param {string} pluginId - The unique identifier of the plugin.
    * @param {string[]} authors - The list of authors of the plugin.
+   * @param {string} [signature] - The cryptographic signature provided by the plugin.
    * @returns {boolean} True if access is granted, false otherwise.
    */
-  canAccessEngine(pluginId, authors) {
-    const { mode, whitelist, blacklist } = this.#accessControl;
+  canAccessEngine(pluginId, authors, signature) {
+    const { mode, whitelist, blacklist, publicKey, cryptoAlgorithm } = this.#accessControl;
+
+    if (mode === 'cryptographic') {
+      if (typeof publicKey !== 'string') {
+        throw new TypeError(
+          'Security Error: Cryptographic mode enabled, but public key is missing.',
+        );
+      }
+      if (typeof signature !== 'string') {
+        throw new TypeError(
+          'Security Error: Cryptographic mode enabled, but signature key is missing.',
+        );
+      }
+
+      // Create a deterministic identity string
+      // We sort authors to ensure the string is identical regardless of input order
+      const identity = JSON.stringify({
+        id: pluginId,
+        authors: [...authors].sort(),
+      });
+
+      try {
+        return verify(cryptoAlgorithm, Buffer.from(identity), publicKey, Buffer.from(signature));
+      } catch (err) {
+        console.error(err);
+        return false;
+      }
+    }
 
     if (mode === 'whitelist') {
       const isIdAllowed = whitelist.ids.includes(pluginId);
