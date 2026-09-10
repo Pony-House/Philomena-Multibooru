@@ -92,8 +92,8 @@ class TinyPluginLayer {
 
 /**
  * @typedef {Object} BlackListCore
- * @property {BlackListValue[]} get
- * @property {BlackListValue[]} set
+ * @property {Set<BlackListValue>} get
+ * @property {Set<BlackListValue>} set
  */
 
 /**
@@ -110,6 +110,12 @@ class TinyPluginLayer {
 
 /**
  * @typedef {Object} BwList
+ * @property {Set<BlackListValue>} ids
+ * @property {Set<BlackListValue>} authors
+ */
+
+/**
+ * @typedef {Object} BwListArray
  * @property {BlackListValue[]} ids
  * @property {BlackListValue[]} authors
  */
@@ -128,8 +134,8 @@ class TinyPluginLayer {
 /**
  * @typedef {Object} PluginAccessControlPartial
  * @property {PluginAccessControlMode} mode
- * @property {BwList} [whitelist]
- * @property {BwList} [blacklist]
+ * @property {BwListArray} [whitelist]
+ * @property {BwListArray} [blacklist]
  * @property {string} [publicKey] - The public key used for cryptographic verification.
  * @property {string} [cryptoAlgorithm='sha256']
  */
@@ -150,16 +156,19 @@ class TinyPluginLayer {
 class TinyPluginCore extends TinyDebugger {
   static #pluginsDestroyEventName = 'pluginsDestroyed';
   /** @type {BlackListCore} */
-  #sandboxBlacklist = { get: [], set: [] };
+  #sandboxBlacklist = { get: new Set(), set: new Set() };
 
   /** @type {PluginAccessControl} */
   #accessControl = {
     mode: 'none',
     cryptoAlgorithm: 'sha256',
     publicKey: null,
-    whitelist: { ids: [], authors: [] },
-    blacklist: { ids: [], authors: [] },
+    whitelist: { ids: new Set(), authors: new Set() },
+    blacklist: { ids: new Set(), authors: new Set() },
   };
+
+  /** @type {Set<string>} */
+  #verifiedPlugins = new Set();
 
   /**
    * Gets the event name used when all plugins are destroyed.
@@ -265,12 +274,14 @@ class TinyPluginCore extends TinyDebugger {
 
     if (isJsonObject(ops?.sandboxBlacklist)) {
       const { get, set } = ops.sandboxBlacklist;
-      if (typeof get !== 'undefined') checkBlackList('get', get);
-      if (typeof set !== 'undefined') checkBlackList('set', set);
-      this.#sandboxBlacklist = {
-        get: [...new Set([...(get ?? [])])],
-        set: [...new Set([...(set ?? [])])],
-      };
+      if (typeof get !== 'undefined') {
+        checkBlackList('get', get);
+        get.forEach((v) => this.#sandboxBlacklist.get.add(v));
+      }
+      if (typeof set !== 'undefined') {
+        checkBlackList('set', set);
+        set.forEach((v) => this.#sandboxBlacklist.set.add(v));
+      }
     }
 
     if (isJsonObject(ops?.accessControl)) {
@@ -301,31 +312,57 @@ class TinyPluginCore extends TinyDebugger {
       }
 
       if (isJsonObject(whitelist)) {
-        if (typeof whitelist.ids !== 'undefined') checkBlackList('whitelist ids', whitelist.ids);
-        if (typeof whitelist.authors !== 'undefined')
+        if (typeof whitelist.ids !== 'undefined') {
+          checkBlackList('whitelist ids', whitelist.ids);
+          whitelist.ids.forEach((id) => this.#accessControl.whitelist.ids.add(id));
+        }
+        if (typeof whitelist.authors !== 'undefined') {
           checkBlackList('whistlist authors', whitelist.authors);
+          whitelist.authors.forEach((id) => this.#accessControl.whitelist.authors.add(id));
+        }
       }
 
       if (isJsonObject(blacklist)) {
-        if (typeof blacklist.ids !== 'undefined') checkBlackList('blacklist ids', blacklist.ids);
-        if (typeof blacklist.authors !== 'undefined')
+        if (typeof blacklist.ids !== 'undefined') {
+          checkBlackList('blacklist ids', blacklist.ids);
+          blacklist.ids.forEach((id) => this.#accessControl.blacklist.ids.add(id));
+        }
+        if (typeof blacklist.authors !== 'undefined') {
           checkBlackList('blacklist authors', blacklist.authors);
+          blacklist.authors.forEach((id) => this.#accessControl.blacklist.authors.add(id));
+        }
       }
 
-      this.#accessControl = {
-        mode: typeof mode === 'string' ? mode : 'none',
-        publicKey: typeof publicKey === 'string' ? publicKey : null,
-        cryptoAlgorithm: typeof cryptoAlgorithm === 'string' ? cryptoAlgorithm : 'sha256',
-        whitelist: {
-          ids: Array.isArray(whitelist?.ids) ? [...new Set(whitelist.ids)] : [],
-          authors: Array.isArray(whitelist?.authors) ? [...new Set(whitelist.authors)] : [],
-        },
-        blacklist: {
-          ids: Array.isArray(blacklist?.ids) ? [...new Set(blacklist.ids)] : [],
-          authors: Array.isArray(blacklist?.authors) ? [...new Set(blacklist.authors)] : [],
-        },
-      };
+      if (typeof mode === 'string') this.#accessControl.mode = mode;
+      if (typeof publicKey === 'string') this.#accessControl.publicKey = publicKey;
+      if (typeof cryptoAlgorithm === 'string')
+        this.#accessControl.cryptoAlgorithm = cryptoAlgorithm;
     }
+  }
+
+  /**
+   * Create a deterministic identity string.
+   * @param {string} pluginId - The unique identifier of the plugin.
+   * @param {string[]} authors - The list of authors of the plugin.
+   * @returns {string}
+   */
+  #createIdChecker(pluginId, authors) {
+    if (typeof pluginId !== 'string') {
+      throw new TypeError('Security Error: Cryptographic mode enabled, but pluginId is missing.');
+    }
+
+    if (!Array.isArray(authors)) {
+      throw new TypeError('Security Error: Cryptographic mode enabled, but authors is missing.');
+    }
+    if (!authors.every((author) => typeof author === 'string')) {
+      throw new TypeError('Security Error: Cryptographic mode enabled, but authors is invalid.');
+    }
+
+    // We sort authors to ensure the string is identical regardless of input order
+    return JSON.stringify({
+      id: pluginId,
+      authors: [...authors].sort(),
+    });
   }
 
   /**
@@ -336,9 +373,46 @@ class TinyPluginCore extends TinyDebugger {
    * @returns {boolean} True if access is granted, false otherwise.
    */
   canAccessEngine(pluginId, authors, signature) {
-    const { mode, whitelist, blacklist, publicKey, cryptoAlgorithm } = this.#accessControl;
+    const { mode, whitelist, blacklist } = this.#accessControl;
 
     if (mode === 'cryptographic') {
+      try {
+        // const identity = this.#createIdChecker(pluginId, authors);
+        // return verify(cryptoAlgorithm, Buffer.from(identity), publicKey, Buffer.from(signature));
+        return false;
+      } catch (err) {
+        console.error(err);
+        return false;
+      }
+    }
+
+    if (mode === 'whitelist') {
+      const isIdAllowed = whitelist.ids.has(pluginId);
+      const isAuthorAllowed = authors.some((author) => whitelist.authors.has(author));
+      return isIdAllowed || isAuthorAllowed;
+    }
+
+    if (mode === 'blacklist') {
+      const isIdBlocked = blacklist.ids.has(pluginId);
+      const isAuthorBlocked = authors.some((author) => blacklist.authors.has(author));
+      return !isIdBlocked && !isAuthorBlocked;
+    }
+
+    return true; // 'none' mode allows everyone
+  }
+
+  /**
+   * Validate asynchronous encryption signature using the native browser API.
+   * @param {string} pluginId - The unique identifier of the plugin.
+   * @param {string[]} authors - The list of authors of the plugin.
+   * @param {string} signature
+   * @returns {Promise<boolean>}
+   */
+  async verifyPluginSignature(pluginId, authors, signature) {
+    const { publicKey, cryptoAlgorithm } = this.#accessControl;
+    const identity = this.#createIdChecker(pluginId, authors);
+
+    try {
       if (typeof publicKey !== 'string') {
         throw new TypeError(
           'Security Error: Cryptographic mode enabled, but public key is missing.',
@@ -350,35 +424,31 @@ class TinyPluginCore extends TinyDebugger {
         );
       }
 
-      // Create a deterministic identity string
-      // We sort authors to ensure the string is identical regardless of input order
-      const identity = JSON.stringify({
-        id: pluginId,
-        authors: [...authors].sort(),
-      });
+      const encoder = new TextEncoder();
+      const dataBytes = encoder.encode(identity);
+      const importedPublicKey = encoder.encode(publicKey);
+      const signatureBuffer = encoder.encode(identity);
 
-      try {
-        // return verify(cryptoAlgorithm, Buffer.from(identity), publicKey, Buffer.from(signature));
-        return false;
-      } catch (err) {
-        console.error(err);
-        return false;
-      }
+      const cryptoKey = await crypto.subtle.importKey(
+        'raw',
+        importedPublicKey,
+        { name: 'HMAC', hash: cryptoAlgorithm },
+        false,
+        ['sign', 'verify'],
+      );
+
+      const isValid = await crypto.subtle.verify(
+        { name: 'RSASSA-PKCS1-v1_5' },
+        cryptoKey,
+        signatureBuffer,
+        dataBytes,
+      );
+
+      return isValid;
+    } catch (err) {
+      console.error(err);
+      return false;
     }
-
-    if (mode === 'whitelist') {
-      const isIdAllowed = whitelist.ids.includes(pluginId);
-      const isAuthorAllowed = authors.some((author) => whitelist.authors.includes(author));
-      return isIdAllowed || isAuthorAllowed;
-    }
-
-    if (mode === 'blacklist') {
-      const isIdBlocked = blacklist.ids.includes(pluginId);
-      const isAuthorBlocked = authors.some((author) => blacklist.authors.includes(author));
-      return !isIdBlocked && !isAuthorBlocked;
-    }
-
-    return true; // 'none' mode allows everyone
   }
 
   /**
@@ -435,6 +505,7 @@ class TinyPluginCore extends TinyDebugger {
    * Destroys all registered plugins and emits the destruction event.
    */
   destroyPlugins() {
+    this.#verifiedPlugins.clear();
     this.#plugins.forEach((plugin) => plugin.destroy());
     this.emit(TinyPluginCore.#pluginsDestroyEventName);
   }
@@ -522,17 +593,17 @@ class TinyPlugin extends TinyDebugger {
   }
 
   /** @type {BlackListCore} */
-  #sandboxBlacklist = { get: [], set: [] };
+  #sandboxBlacklist = { get: new Set(), set: new Set() };
 
   /** @type {IdString} The unique id of the plugin. */
   // @ts-ignore
   #id = '';
   /** @type {string} The description of the plugin. */
   #description = '';
-  /** @type {string[]} The list of authors of the plugin. */
-  #authors = [];
-  /** @type {string[]} The list of contributors to the plugin. */
-  #contributors = [];
+  /** @type {Set<string>} The list of authors of the plugin. */
+  #authors = new Set();
+  /** @type {Set<string>} The list of contributors to the plugin. */
+  #contributors = new Set();
   /** @type {TinyVersion<VersionString>|null} The version string of the plugin. */
   #version = null;
   /** @type {Engine} The engine instance this plugin is attached to. */
@@ -667,7 +738,7 @@ class TinyPlugin extends TinyDebugger {
    */
   get authors() {
     checkDestroy(this.#isDestroyed);
-    if (this.#authors.length === 0) throw new Error('Plugin authors is not set.');
+    if (this.#authors.size === 0) throw new Error('Plugin authors is not set.');
     return Object.freeze([...this.#authors]);
   }
 
@@ -679,14 +750,14 @@ class TinyPlugin extends TinyDebugger {
    */
   set authors(value) {
     checkDestroy(this.#isDestroyed);
-    if (this.#authors.length !== 0) throw new Error('Authors is already set.');
+    if (this.#authors.size !== 0) throw new Error('Authors is already set.');
     if (
       !Array.isArray(value) ||
       !value.every((v) => typeof v === 'string' && v.trim().length !== 0)
     )
       throw new TypeError('Authors must be a array of non-empty strings.');
     if (value.length === 0) throw new TypeError('Authors cannot be empty.');
-    this.#authors = [...new Set([...value])];
+    value.forEach((v) => this.#authors.add(v));
   }
 
   /**
@@ -695,7 +766,7 @@ class TinyPlugin extends TinyDebugger {
    */
   get contributors() {
     checkDestroy(this.#isDestroyed);
-    if (this.#contributors.length === 0) throw new Error('Plugin contributors is not set.');
+    if (this.#contributors.size === 0) throw new Error('Plugin contributors is not set.');
     return Object.freeze([...this.#contributors]);
   }
 
@@ -707,14 +778,14 @@ class TinyPlugin extends TinyDebugger {
    */
   set contributors(value) {
     checkDestroy(this.#isDestroyed);
-    if (this.#contributors.length !== 0) throw new Error('Authors is already set.');
+    if (this.#contributors.size !== 0) throw new Error('Authors is already set.');
     if (
       !Array.isArray(value) ||
       !value.every((v) => typeof v === 'string' && v.trim().length !== 0)
     )
       throw new TypeError('Authors must be a array of non-empty strings.');
     if (value.length === 0) throw new TypeError('Authors cannot be empty.');
-    this.#contributors = [...new Set([...value])];
+    value.forEach((v) => this.#contributors.add(v));
   }
 
   /**
@@ -761,7 +832,7 @@ class TinyPlugin extends TinyDebugger {
     checkDestroy(this.#isDestroyed);
 
     // Identity-based security check
-    if (!this.#engine.canAccessEngine(this.#id, this.#authors)) {
+    if (!this.#engine.canAccessEngine(this.#id, [...this.#authors])) {
       throw new Error(
         `Security Error: Access to the engine is denied for plugin "${this.id}" based on current access control rules.`,
       );
@@ -770,7 +841,7 @@ class TinyPlugin extends TinyDebugger {
     const sandboxBlacklist = this.#sandboxBlacklist;
     return new Proxy(this.#engine, {
       get(target, prop) {
-        if (sandboxBlacklist.get.includes(prop)) {
+        if (sandboxBlacklist.get.has(prop)) {
           // Prevent access to blocked private/internal methods
           throw new Error(
             `Security Error: Access to property "${String(prop)}" is denied by the sandbox.`,
@@ -780,7 +851,7 @@ class TinyPlugin extends TinyDebugger {
         return typeof value === 'function' ? value.bind(target) : value;
       },
       set(target, prop, newValue) {
-        if (sandboxBlacklist.set.includes(prop)) {
+        if (sandboxBlacklist.set.has(prop)) {
           // Prevent the plugin from modifying blocked properties on the sandbox
           throw new Error(
             'Security Error: Cannot modify read-only properties on the plugin sandbox.',
@@ -872,13 +943,12 @@ class TinyPlugin extends TinyDebugger {
       'accessControlMode',
       'accessControlWhitelist',
       'accessControlBlacklist',
+      'verifyPluginSignature',
       'canAccessEngine',
     ];
 
-    this.#sandboxBlacklist = {
-      get: [...new Set(blockedGetKeys)],
-      set: [...new Set(blockedEditKeys)],
-    };
+    blockedGetKeys.forEach((key) => this.#sandboxBlacklist.get.add(key));
+    blockedEditKeys.forEach((key) => this.#sandboxBlacklist.set.add(key));
 
     return new Proxy(this, {
       get(target, prop) {
@@ -934,8 +1004,8 @@ class TinyPlugin extends TinyDebugger {
       // 4. Final validation of core identity
       if (this.#id.length === 0) throw new Error('Plugin id is not set.');
       if (this.#description.length === 0) throw new Error('Plugin description is not set.');
-      if (this.#authors.length === 0) throw new Error('Plugin authors is not set.');
-      if (this.#contributors.length === 0) throw new Error('Plugin contributors is not set.');
+      if (this.#authors.size === 0) throw new Error('Plugin authors is not set.');
+      if (this.#contributors.size === 0) throw new Error('Plugin contributors is not set.');
       if (!this.#version) throw new Error('Plugin version is not set.');
 
       this.#isReady = true;
