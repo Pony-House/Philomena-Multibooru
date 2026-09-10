@@ -369,21 +369,13 @@ class TinyPluginCore extends TinyDebugger {
    * Validates if a plugin is permitted to access the engine's properties based on identity.
    * @param {string} pluginId - The unique identifier of the plugin.
    * @param {string[]} authors - The list of authors of the plugin.
-   * @param {string} [signature] - The cryptographic signature provided by the plugin.
    * @returns {boolean} True if access is granted, false otherwise.
    */
-  canAccessEngine(pluginId, authors, signature) {
+  canAccessEngine(pluginId, authors) {
     const { mode, whitelist, blacklist } = this.#accessControl;
 
     if (mode === 'cryptographic') {
-      try {
-        // const identity = this.#createIdChecker(pluginId, authors);
-        // return verify(cryptoAlgorithm, Buffer.from(identity), publicKey, Buffer.from(signature));
-        return false;
-      } catch (err) {
-        console.error(err);
-        return false;
-      }
+      return this.#verifiedPlugins.has(pluginId);
     }
 
     if (mode === 'whitelist') {
@@ -405,7 +397,7 @@ class TinyPluginCore extends TinyDebugger {
    * Validate asynchronous encryption signature using the native browser API.
    * @param {string} pluginId - The unique identifier of the plugin.
    * @param {string[]} authors - The list of authors of the plugin.
-   * @param {string} signature
+   * @param {string} signature - The cryptographic signature provided by the plugin.
    * @returns {Promise<boolean>}
    */
   async verifyPluginSignature(pluginId, authors, signature) {
@@ -444,6 +436,7 @@ class TinyPluginCore extends TinyDebugger {
         dataBytes,
       );
 
+      if (isValid) this.#verifiedPlugins.add(pluginId);
       return isValid;
     } catch (err) {
       console.error(err);
