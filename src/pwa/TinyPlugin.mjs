@@ -1,4 +1,4 @@
-import { verify } from 'crypto';
+// import { verify } from 'crypto';
 import { isJsonObject } from 'tiny-essentials/basics/objChecker';
 import TinyDebugger from 'tiny-essentials/libs/tools/TinyDebugger';
 import TinyVersion from 'tiny-essentials/libs/plugin/TinyVersion';
@@ -358,7 +358,8 @@ class TinyPluginCore extends TinyDebugger {
       });
 
       try {
-        return verify(cryptoAlgorithm, Buffer.from(identity), publicKey, Buffer.from(signature));
+        // return verify(cryptoAlgorithm, Buffer.from(identity), publicKey, Buffer.from(signature));
+        return false;
       } catch (err) {
         console.error(err);
         return false;
