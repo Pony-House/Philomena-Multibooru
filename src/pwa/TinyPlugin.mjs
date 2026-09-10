@@ -108,6 +108,32 @@ class TinyPluginLayer {
  */
 
 /**
+ * @typedef {Object} BwList
+ * @property {BlackListValue[]} ids
+ * @property {BlackListValue[]} authors
+ */
+
+/**
+ * @typedef {Object} PluginAccessControl
+ * @property {'none' | 'whitelist' | 'blacklist'} mode - The operational mode for engine access control.
+ * @property {BwList} whitelist
+ * @property {BwList} blacklist
+ */
+
+/**
+ * @typedef {Object} BwListProtected
+ * @property {readonly BlackListValue[]} ids
+ * @property {readonly BlackListValue[]} authors
+ */
+
+/**
+ * @typedef {Object} PluginAccessControlProtected
+ * @property {'none' | 'whitelist' | 'blacklist'} mode - The operational mode for engine access control.
+ * @property {Readonly<BwListProtected>} whitelist
+ * @property {Readonly<BwListProtected>} blacklist
+ */
+
+/**
  * The core engine class responsible for managing the plugin lifecycle and registry.
  * It extends TinyDebugger to provide debugging capabilities alongside plugin management.
  */
@@ -115,6 +141,13 @@ class TinyPluginCore extends TinyDebugger {
   static #pluginsDestroyEventName = 'pluginsDestroyed';
   /** @type {BlackListCore} */
   #sandboxBlacklist = { get: [], set: [] };
+
+  /** @type {PluginAccessControl} */
+  #accessControl = {
+    mode: 'none',
+    whitelist: { ids: [], authors: [] },
+    blacklist: { ids: [], authors: [] },
+  };
 
   /**
    * Gets the event name used when all plugins are destroyed.
@@ -167,38 +200,106 @@ class TinyPluginCore extends TinyDebugger {
   }
 
   /**
+   * Gets the current engine access control configuration.
+   * @returns {Readonly<PluginAccessControlProtected>}
+   */
+  get accessControl() {
+    return Object.freeze({
+      mode: this.#accessControl.mode,
+      whitelist: Object.freeze({
+        ids: Object.freeze([...this.#accessControl.whitelist.ids]),
+        authors: Object.freeze([...this.#accessControl.whitelist.authors]),
+      }),
+      blacklist: Object.freeze({
+        ids: Object.freeze([...this.#accessControl.blacklist.ids]),
+        authors: Object.freeze([...this.#accessControl.blacklist.authors]),
+      }),
+    });
+  }
+
+  /**
    * Initializes a new instance of the TinyPluginCore class.
-   * @param {Object} ops - The configuration options for the debugger base class.
-   * @param {BlackListCorePartial} [ops.sandboxBlacklist] - A list of keys to be blacklisted from the engine proxy.
-   * @param {DebuggerConstructor} ops.logCfg - The configuration options for the debugger base class.
+   * @param {Object} ops - The configuration options.
+   * @param {DebuggerConstructor} ops.logCfg - The configuration options for the debugger.
+   * @param {BlackListCorePartial} [ops.sandboxBlacklist] - A list of keys to be blacklisted.
+   * @param {PluginAccessControl} [ops.accessControl] - Configuration for identity-based engine access.
    */
   constructor(ops) {
     super(ops.logCfg);
-    if (ops?.sandboxBlacklist) {
-      /**
-       * @param {string} key
-       * @param {BlackListValue[]} values
-       */
-      const checkBlackList = (key, values) => {
-        if (
-          !Array.isArray(values) ||
-          !values.every((k) => typeof k === 'string' || typeof k === 'symbol')
-        ) {
-          throw new TypeError(`The ${key} of sandbox blacklist must be an array of strings.`);
-        }
-      };
-
-      if (isJsonObject(ops.sandboxBlacklist)) {
-        if (typeof ops.sandboxBlacklist.get !== 'undefined')
-          checkBlackList('get', ops.sandboxBlacklist.get);
-        if (typeof ops.sandboxBlacklist.set !== 'undefined')
-          checkBlackList('set', ops.sandboxBlacklist.set);
-        this.#sandboxBlacklist = {
-          get: [...new Set([...(ops.sandboxBlacklist.get ?? [])])],
-          set: [...new Set([...(ops.sandboxBlacklist.set ?? [])])],
-        };
+    /**
+     * @param {string} key
+     * @param {BlackListValue[]} values
+     */
+    const checkBlackList = (key, values) => {
+      if (
+        !Array.isArray(values) ||
+        !values.every((k) => typeof k === 'string' || typeof k === 'symbol')
+      ) {
+        throw new TypeError(`The ${key} of sandbox blacklist must be an array of strings.`);
       }
+    };
+
+    if (isJsonObject(ops?.sandboxBlacklist)) {
+      const { get, set } = ops.sandboxBlacklist;
+      if (typeof get !== 'undefined') checkBlackList('get', get);
+      if (typeof set !== 'undefined') checkBlackList('set', set);
+      this.#sandboxBlacklist = {
+        get: [...new Set([...(get ?? [])])],
+        set: [...new Set([...(set ?? [])])],
+      };
     }
+
+    if (isJsonObject(ops?.accessControl)) {
+      const { mode, whitelist, blacklist } = ops.accessControl;
+
+      if (mode !== 'none' && mode !== 'whitelist' && mode !== 'blacklist') {
+        throw new TypeError('accessControl.mode must be "none", "whitelist", or "blacklist".');
+      }
+
+      if (typeof whitelist.ids !== 'undefined') checkBlackList('whitelist ids', whitelist.ids);
+      if (typeof whitelist.authors !== 'undefined')
+        checkBlackList('whistlist authors', whitelist.authors);
+
+      if (typeof blacklist.ids !== 'undefined') checkBlackList('blacklist ids', blacklist.ids);
+      if (typeof blacklist.authors !== 'undefined')
+        checkBlackList('blacklist authors', blacklist.authors);
+
+      this.#accessControl = {
+        mode: mode ?? 'none',
+        whitelist: {
+          ids: Array.isArray(whitelist.ids) ? [...new Set(whitelist.ids)] : [],
+          authors: Array.isArray(whitelist.authors) ? [...new Set(whitelist.authors)] : [],
+        },
+        blacklist: {
+          ids: Array.isArray(blacklist.ids) ? [...new Set(blacklist.ids)] : [],
+          authors: Array.isArray(blacklist.authors) ? [...new Set(blacklist.authors)] : [],
+        },
+      };
+    }
+  }
+
+  /**
+   * Validates if a plugin is permitted to access the engine's properties based on identity.
+   * @param {string} pluginId - The unique identifier of the plugin.
+   * @param {string[]} authors - The list of authors of the plugin.
+   * @returns {boolean} True if access is granted, false otherwise.
+   */
+  canAccessEngine(pluginId, authors) {
+    const { mode, whitelist, blacklist } = this.#accessControl;
+
+    if (mode === 'whitelist') {
+      const isIdAllowed = whitelist.ids.includes(pluginId);
+      const isAuthorAllowed = authors.some((author) => whitelist.authors.includes(author));
+      return isIdAllowed || isAuthorAllowed;
+    }
+
+    if (mode === 'blacklist') {
+      const isIdBlocked = blacklist.ids.includes(pluginId);
+      const isAuthorBlocked = authors.some((author) => blacklist.authors.includes(author));
+      return !isIdBlocked && !isAuthorBlocked;
+    }
+
+    return true; // 'none' mode allows everyone
   }
 
   /**
@@ -221,7 +322,7 @@ class TinyPluginCore extends TinyDebugger {
    * @returns {TinyPlugin<this, Layer, Id, Version, Options>} The newly installed plugin instance.
    */
   installPlugin(plugin, ...options) {
-    return TinyPlugin.addModuleToCore(this, plugin, ...options);
+    return TinyPlugin._addModuleToCore(this, plugin, ...options);
   }
 
   /**
@@ -324,7 +425,7 @@ class TinyPlugin extends TinyDebugger {
    * @returns {TinyPlugin<ExternalEngine, ExternalLayer, ExternalIdString, ExternalVersionString, ExternalOptions>} - The plugin instance.
    * @throws {TypeError} If the provided engine is not an instance of TinyPluginCore.
    */
-  static addModuleToCore(engine, plugin, ...options) {
+  static _addModuleToCore(engine, plugin, ...options) {
     if (!(engine instanceof TinyPluginCore))
       throw new TypeError('The provided engine must be an instance of TinyPluginCore.');
     /** @type {TinyPlugin<ExternalEngine, ExternalLayer, ExternalIdString, ExternalVersionString, ExternalOptions>} */
@@ -575,9 +676,18 @@ class TinyPlugin extends TinyDebugger {
    * Gets the engine instance associated with this plugin.
    * The engine is proxied to prevent unauthorized access to internal methods.
    * @returns {Engine} The engine instance.
+   * @throws {Error} If the plugin is denied access to the engine by the access control rules.
    */
   get engine() {
     checkDestroy(this.#isDestroyed);
+
+    // Identity-based security check
+    if (!this.#engine.canAccessEngine(this.#id, this.#authors)) {
+      throw new Error(
+        `Security Error: Access to the engine is denied for plugin "${this.id}" based on current access control rules.`,
+      );
+    }
+
     const sandboxBlacklist = this.#sandboxBlacklist;
     return new Proxy(this.#engine, {
       get(target, prop) {
@@ -677,7 +787,12 @@ class TinyPlugin extends TinyDebugger {
     ];
 
     /** @type {BlackListValue[]} */
-    const blockedEditKeys = [...blockedGetKeys, ...coreBlacklist.set];
+    const blockedEditKeys = [
+      ...blockedGetKeys,
+      ...coreBlacklist.set,
+      'accessControl',
+      'canAccessEngine',
+    ];
 
     this.#sandboxBlacklist = {
       get: [...new Set(blockedGetKeys)],
