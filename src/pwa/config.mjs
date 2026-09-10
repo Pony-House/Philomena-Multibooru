@@ -3,8 +3,6 @@ import RegisterGlobCachePlugin from './plugins/GlobCachePlugin.mjs';
 import ViteFileDetectorPlugin from './plugins/ViteFileDetector.mjs';
 import TinyTabManagerPlugin from './plugins/TabManager.mjs';
 
-const { isNavigate } = TinyServiceWorkerEngine;
-
 /** @type {ServiceWorkerGlobalScope} */
 // @ts-ignore
 export const sw = self;
@@ -37,8 +35,6 @@ tinySw.installPlugin(RegisterGlobCachePlugin, {
   '/:host/profiles/:id',
 ].forEach((path) =>
   tinySw.addFetchUrlListener(path, (f, r) => {
-    // We only intercept navigation requests (HTML)
-    if (!isNavigate(f.request)) return;
     r.code = 200;
   }),
 );
