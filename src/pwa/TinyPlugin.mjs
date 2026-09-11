@@ -427,10 +427,10 @@ const createAccessControl = () => ({
  * @param {InstanceObj} instance
  * @param {BlackListCoreProtected} engineSandboxBlacklist
  * @param {BlackListCore} sandboxBlacklist
- * @param {BlackListValue[]} setKeys
- * @param {BlackListValue[]} getKeys
- * @param {BlackListValue[]} bGetKeys
- * @param {BlackListValue[]} bSetKeys
+ * @param {BlackListValue[]} setKeys - Allowed set keys.
+ * @param {BlackListValue[]} getKeys - Allowed get keys.
+ * @param {BlackListValue[]} [beGetKeys] - Blocked engine get keys
+ * @param {BlackListValue[]} [beSetKeys] - Blocked engine set keys
  */
 const createSandbox = (
   instance,
@@ -438,8 +438,8 @@ const createSandbox = (
   sandboxBlacklist,
   setKeys,
   getKeys,
-  bGetKeys,
-  bSetKeys,
+  beGetKeys,
+  beSetKeys,
 ) => {
   /** @type {BlackListValue[]} */
   const allowedSetKeys = [...setKeys];
@@ -450,10 +450,10 @@ const createSandbox = (
   /** @type {BlackListCoreProtected} */
   const coreBlacklist = engineSandboxBlacklist ?? { get: {}, set: {} };
   /** @type {BlackListValue[]} */
-  const blockedGetKeys = [...bGetKeys, ...coreBlacklist.get];
+  const blockedGetKeys = [...(beGetKeys ?? []), ...coreBlacklist.get];
 
   /** @type {BlackListValue[]} */
-  const blockedSetKeys = [...blockedGetKeys, ...coreBlacklist.set, ...bSetKeys];
+  const blockedSetKeys = [...blockedGetKeys, ...coreBlacklist.set, ...(beSetKeys ?? [])];
 
   blockedGetKeys.forEach((key) => sandboxBlacklist.get.add(key));
   blockedSetKeys.forEach((key) => sandboxBlacklist.set.add(key));
@@ -498,8 +498,6 @@ const createSandbox = (
  */
 class TinyPluginLayer {
   #isReady = false;
-  /** @type {BlackListCore} */
-  #sandboxBlacklist = { get: new Set(), set: new Set() };
   /** @type {Set<string>} */
   #verifiedPlugins = new Set();
 
@@ -511,11 +509,45 @@ class TinyPluginLayer {
   }
 
   /**
+   * Gets the current layer access control whitelist.
+   * @returns {BwListProtected} The current layer access control whitelist.
+   */
+  get accessControlWhitelist() {
+    return Object.freeze({
+      ids: Object.freeze([...this.#accessControl.whitelist.ids]),
+      authors: Object.freeze([...this.#accessControl.whitelist.authors]),
+      categories: Object.freeze([...this.#accessControl.whitelist.categories]),
+      tags: Object.freeze([...this.#accessControl.whitelist.tags]),
+    });
+  }
+
+  /**
+   * Gets the current layer access control blacklist.
+   * @returns {BwListProtected} The current layer access control blacklist.
+   */
+  get accessControlBlacklist() {
+    return Object.freeze({
+      ids: Object.freeze([...this.#accessControl.blacklist.ids]),
+      authors: Object.freeze([...this.#accessControl.blacklist.authors]),
+      categories: Object.freeze([...this.#accessControl.blacklist.categories]),
+      tags: Object.freeze([...this.#accessControl.blacklist.tags]),
+    });
+  }
+
+  /**
+   * Gets the current layer access control mode.
+   * @returns {PluginAccessControlMode} The current layer access control mode.
+   */
+  get accessControlMode() {
+    return this.#accessControl.mode;
+  }
+
+  /**
    * Initializes a new instance of the TinyPluginLayer class.
    * @param {TinyPluginConstructor} ops - The configuration options.
    */
   constructor(ops) {
-    pluginConstrctor(ops, this.#accessControl, this.#sandboxBlacklist);
+    pluginConstrctor(ops, this.#accessControl, { get: new Set(), set: new Set() });
   }
 
   /**
@@ -581,33 +613,21 @@ class TinyPluginLayer {
    * @returns {this} A proxied instance of the layer.
    */
   _createSandbox() {
-    const blacklist = {
-      get: this.#sandboxBlacklist.get,
-      set: this.#sandboxBlacklist.set,
-    };
-
-    return new Proxy(this, {
-      get(target, prop) {
-        if (blacklist.get.has(prop)) {
-          throw new Error(
-            `Security Error: Access to property "${String(prop)}" is denied by the layer sandbox.`,
-          );
-        }
-        const value = Reflect.get(target, prop, target);
-        return typeof value === 'function' ? value.bind(target) : value;
-      },
-      set(target, prop, newValue) {
-        if (blacklist.set.has(prop)) {
-          throw new Error(
-            'Security Error: Cannot modify read-only properties on the layer sandbox.',
-          );
-        }
-        return Reflect.set(target, prop, newValue);
-      },
-      setPrototypeOf() {
-        throw new Error('Security Error: Prototype manipulation is forbidden.');
-      },
-    });
+    return createSandbox(
+      this,
+      { set: [], get: [] },
+      { get: new Set(), set: new Set() },
+      // Allowed set keys.
+      [],
+      // Allowed get keys.
+      [
+        'accessControlMode',
+        'accessControlWhitelist',
+        'accessControlBlacklist',
+        'verifyPluginSignature',
+        'canAccessEngine',
+      ],
+    );
   }
 }
 
@@ -1376,9 +1396,9 @@ class TinyPlugin extends TinyDebugger {
       this,
       this.#engine.sandboxBlacklist,
       this.#sandboxBlacklist,
-      // Set Keys
+      // Allowed set keys.
       ['id', 'version', 'description', 'authors', 'contributors', 'categories', 'tags'],
-      // Get Keys
+      // Allowed get keys.
       [
         'tinyVersion',
         'isReady',
@@ -1393,9 +1413,9 @@ class TinyPlugin extends TinyDebugger {
         'getPlugin',
         'isDestroyed',
       ],
-      // Blocked Get Keys
+      // Blocked engine get keys
       ['getPlugin', 'plugins', 'installPlugin', '_addPlugin', 'destroyPlugins'],
-      // Blocked Set Keys
+      // Blocked engine set keys
       [
         'accessControlMode',
         'accessControlWhitelist',
