@@ -15,8 +15,8 @@ const checkDestroy = createCheckDestroyed('TinyPlugin');
  * - Create your main application class.
  * - Extend this class from `TinyPluginCore`.
  * - This enables your class to manage the plugin registry and lifecycle.
- * - **Access Control Configuration:** In the constructor, you can define how plugins
- *   interact with the engine:
+ * - **Access Control Configuration:** In the constructor, define how plugins
+ *   interact with the engine via `ops.accessControl`:
  *    - `none`: All registered plugins have full access.
  *    - `whitelist`: Only plugins matching the `whitelist` (ID or Author) are allowed.
  *    - `blacklist`: Plugins matching the `blacklist` are blocked.
@@ -32,48 +32,57 @@ const checkDestroy = createCheckDestroyed('TinyPlugin');
  * ### B. Implement the Installer (The Logic)
  * - Create an isolated JavaScript file for your plugin.
  * - Use the generic `Installer` type from your specific Engine to annotate your function.
- * - **Pattern:** `&#64;type {import('./YourEngine.mjs').YourEngineInstaller<'PluginId', 'Version', [YourOptions]>}`
- * - This allows the IDE to validate the `options` object when you call `installPlugin`.
+ * - **JSDoc Example:**
+ *    1. Creates your installer type extended from the template TinyPluginInstaller.
+ *    2. Uses your new type: `&#64;type {import('./YourEngine.mjs').YourEngineInstaller<'PluginId', 'Version', [YourOptions]>}`
+ *   *(Note: Use the array notation in JSDoc to represent the rest parameters of options).*
  *
  * ### C. Runtime Validation (The Safety Net)
- * - Inside the installer function, you **MUST** manually validate the `options` object.
+ * - Inside the installer function, you **MUST** manually validate the `options` arguments.
  * - Use `throw new TypeError(...)` for every property defined in your `&#64;typedef`.
  * - This prevents the plugin from entering a "Ready" state if the configuration is invalid.
  *
  * ## 3. [CRITICAL] ARCHITECTURAL INTEGRITY
  * - **NO MUTATION:** Never attempt to manually inject, add, or modify properties or methods on the `instance` (`TinyPlugin`) or the `engine` (`TinyPluginCore`) inside the installer function.
- * - **THE EXTENSION PATTERN (@extended):** If your plugin requires custom methods or properties on the engine, you **must** first create a custom class that extends `TinyPluginCore`. Once your custom subclass is defined, use it as the `Engine` type reference in your plugin's JSDoc.
+ * - **THE EXTENSION PATTERN (&#64;extended):** If your plugin requires custom methods or properties on the engine, you **must** first create a custom class that extends `TinyPluginCore`. Once your custom subclass is defined, use it as the `Engine` type reference in your plugin's JSDoc.
  * - *Rule:* Expand the core via inheritance **before** implementing the plugin logic.
  *
  * ## 4. SECURITY & ACCESS CONTROL
  * - **Identity Verification:** For `cryptographic` mode, plugins must be signed
  *   using `signPluginIdentity` during the build process.
- * - **Engine Protection:** The engine uses a `sandboxBlacklist` to prevent plugins
- *   from accessing sensitive internal methods.
+ * - **Dual-Layer Sandboxing:**
+ *    1. **Plugin-to-Engine:** The `plugin.engine` property returns a Proxy that
+ *       restricts access to sensitive engine methods based on the `sandboxBlacklist`.
+ *    2. **Installer-to-Plugin:** The `sandbox` argument provided to the `installer`
+ *       is a Proxy of the plugin itself, allowing access to identity properties
+ *       (id, version, etc.) while preventing mutation of the plugin instance.
  * - **Proxy Enforcement:** Any attempt to mutate the plugin instance or access
  *   forbidden engine properties will throw a `Security Error`.
  *
  * ## 5. INITIALIZATION
  * - In your main entry point:
  *   1. Import the instance of your `TinyPluginCore` (Engine).
- *   2. Import the plugin installer function.
+ *   2. Import the plugin installer function created by you.
+ *   3. Call `engine.installPlugin(yourPlugin, ...options)`.
  *
  * ## 6. EXECUTION FLOW
- * 1. `engine.installPlugin(plugin, ...options)` is called.
+ * 1. `engine.installPlugin(yourPlugin, ...options)` is called.
  * 2. The Engine creates a `TinyPlugin` instance.
- * 3. A **Sandbox Proxy** is created to wrap the plugin.
- * 4. The `installer` is executed, receiving the `sandbox` and `options`.
- * 5. The `TinyPluginLayer` or a class extended from `TinyPluginLayer` is created by the installer and this is initialized to manage the lifecycle.
- * 6. Return a fully initialized, ready-to-use plugin instance.
+ * 3. The `_startPlugin` lifecycle method is triggered.
+ * 4. A **Sandbox Proxy** of the plugin is created and passed to the `installer`.
+ * 5. The `installer` is executed, receiving the `sandbox` and the `options` arguments.
+ * 6. The `installer` must return a `TinyPluginLayer` instance.
+ * 7. The Engine checks the layer's readiness and calls `layer._startLayer()` if necessary.
+ * 8. The `TinyPlugin` instance is marked as `isReady` and added to the engine.
  *
  * @example
  * // Example of a robust plugin implementation:
  * // &#64;type {ExamplePluginInstaller<'ExamplePlugin', '1.0.0', [ExampleOptions]>}
  * const MyPlugin = (sandbox, options) => {
- *    // 1. Runtime Validation
+ *    // 1. Runtime Validation (options is the first option argument)
  *    if (typeof options.key !== 'string') throw new TypeError('Option "key" must be a string.');
  *
- *    // 2. Use the sandbox to interact with the engine
+ *    // 2. Use the sandbox to interact with the engine via the plugin's proxy
  *    const engine = sandbox.engine;
  *
  *    // 3. Return the layer
@@ -194,12 +203,13 @@ export const createPluginIdChecker = (pluginId, authors) => {
 
 /**
  * @typedef {Object} TinyPluginConstructor - The configuration options.
+ * @property {DebuggerConstructor} config.logCfg - The logging configuration.
  * @property {BlackListCorePartial} [sandboxBlacklist] - A list of keys to be blacklisted.
  * @property {PluginAccessControlPartial} [accessControl] - Configuration for identity-based engine access.
  */
 
 /**
- * @param {TinyPluginConstructor} ops - The configuration options for the constructor.
+ * @param {Partial<TinyPluginConstructor>} ops - The configuration options for the constructor.
  * @param {PluginAccessControl} accessControl - The access control object to be configured.
  * @param {BlackListCore} [sandboxBlacklist] - An optional blacklist for the sandbox.
  */
@@ -501,7 +511,7 @@ const createSandbox = (
  * It manages the 'ready' state and provides a secondary security layer
  * mirroring the TinyPluginCore security ecosystem.
  */
-class TinyPluginLayer {
+class TinyPluginLayer extends TinyDebugger {
   #isReady = false;
   /** @type {Set<string>} */
   #verifiedPlugins = new Set();
@@ -553,10 +563,20 @@ class TinyPluginLayer {
 
   /**
    * Initializes a new instance of the TinyPluginLayer class.
-   * @param {TinyPluginConstructor} [ops] - The configuration options for the layer.
+   * @param {TinyPluginConstructor} ops - The configuration options for the layer.
    */
-  constructor(ops = {}) {
-    pluginConstrctor(ops, this.#accessControl);
+  constructor({
+    logCfg = {
+      id: '[_blue_TinyPluginLayer_reset_]',
+      logger: console,
+      debugMode: false,
+      useLogColors: false,
+    },
+    accessControl,
+    sandboxBlacklist,
+  }) {
+    super(logCfg);
+    pluginConstrctor({ accessControl, sandboxBlacklist }, this.#accessControl);
   }
 
   /**
@@ -813,7 +833,7 @@ class TinyPluginCore extends TinyDebugger {
 
   /**
    * Initializes a new instance of the TinyPluginCore class.
-   * @param {TinyPluginConstructor & { logCfg: DebuggerConstructor }} ops - The configuration options.
+   * @param {TinyPluginConstructor} ops - The configuration options.
    */
   constructor(ops) {
     super(ops.logCfg);

@@ -84,9 +84,22 @@ class TinySwTabsLayer extends TinyPluginLayer {
 
   /**
    * Initializes a new instance of the TinySwTabsLayer, assigning it a unique key and registering it in the static instances registry.
+   * @param {Object} [lgConfig] - Configuration options for the instance.
+   * @param {boolean} [lgConfig.debugMode=false] - Whether to enable internal debug logging.
+   * @param {boolean} [lgConfig.useLogColors=false] - Whether to enable log color support.
+   * @param {Partial<Console>} [lgConfig.logger=console] - A custom logger object.
    */
-  constructor() {
-    super();
+  constructor(lgConfig = {}) {
+    super({
+      sandboxBlacklist: { get: ['getTab'] },
+      logCfg: {
+        id: '[_blue_TinySW-Tabs_reset_]',
+        logger: lgConfig.logger ?? console,
+        debugMode: lgConfig.debugMode ?? false,
+        useLogColors: lgConfig.useLogColors ?? false,
+      },
+    });
+
     TinySwTabsLayer.#lastIndex++;
     TinySwTabsLayer.#instances.set(TinySwTabsLayer.#lastIndex, this.#tabs);
     this.#key = TinySwTabsLayer.#lastIndex;
