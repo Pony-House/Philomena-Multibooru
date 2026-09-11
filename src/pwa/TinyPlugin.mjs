@@ -563,20 +563,18 @@ class TinyPluginLayer extends TinyDebugger {
 
   /**
    * Initializes a new instance of the TinyPluginLayer class.
-   * @param {TinyPluginConstructor} ops - The configuration options for the layer.
+   * @param {TinyPluginConstructor} [ops] - The configuration options for the layer.
    */
-  constructor({
-    logCfg = {
-      id: '[_blue_TinyPluginLayer_reset_]',
-      logger: console,
-      debugMode: false,
-      useLogColors: false,
-    },
-    accessControl,
-    sandboxBlacklist,
-  }) {
-    super(logCfg);
-    pluginConstrctor({ accessControl, sandboxBlacklist }, this.#accessControl);
+  constructor(ops) {
+    super(
+      ops?.logCfg ?? {
+        id: '[_blue_TinyPluginLayer_reset_]',
+        logger: console,
+        debugMode: false,
+        useLogColors: false,
+      },
+    );
+    pluginConstrctor(ops ?? {}, this.#accessControl);
   }
 
   /**
