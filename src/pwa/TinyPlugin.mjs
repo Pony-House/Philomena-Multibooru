@@ -81,6 +81,14 @@ const checkDestroy = createCheckDestroyed('TinyPlugin');
  * };
  */
 
+/**
+ * Helper to check if a value matches a set or if the set allows all via '*'
+ * @param {string} val
+ * @param {Set<BlackListValue>} set
+ * @returns {boolean}
+ */
+const isMatch = (val, set) => set.has('*') || set.has(val);
+
 /** @typedef {AlgorithmIdentifier | RsaPssParams | EcdsaParams} CryptoAlgorithm - A valid Web Crypto API algorithm identifier or parameter object. */
 
 /**
@@ -375,14 +383,6 @@ const isAllowedPlugin = (
   blacklist,
   verifiedPlugins,
 ) => {
-  /**
-   * Helper to check if a value matches a set or if the set allows all via '*'
-   * @param {string} val
-   * @param {Set<BlackListValue>} set
-   * @returns {boolean}
-   */
-  const isMatch = (val, set) => set.has('*') || set.has(val);
-
   // Cryptographic mode: Only plugins that have been successfully verified are returned.
   if (mode === 'cryptographic') {
     return verifiedPlugins.has(pluginId);
@@ -460,7 +460,7 @@ const createSandbox = (
 
   return new Proxy(instance, {
     get(target, prop) {
-      if (allowedGetKeys.includes(prop)) {
+      if (allowedGetKeys.includes(prop) || allowedGetKeys.includes('*')) {
         const value = Reflect.get(target, prop, target);
         return typeof value === 'function' ? value.bind(target) : value;
       }
@@ -470,7 +470,7 @@ const createSandbox = (
       );
     },
     set(target, prop, newValue) {
-      if (allowedSetKeys.includes(prop)) {
+      if (allowedSetKeys.includes(prop) || allowedSetKeys.includes('*')) {
         return Reflect.set(target, prop, newValue);
       }
       // Prevent the plugin from modifying blocked properties on the sandbox
@@ -544,9 +544,9 @@ class TinyPluginLayer {
 
   /**
    * Initializes a new instance of the TinyPluginLayer class.
-   * @param {TinyPluginConstructor} ops - The configuration options.
+   * @param {TinyPluginConstructor} [ops] - The configuration options.
    */
-  constructor(ops) {
+  constructor(ops = {}) {
     pluginConstrctor(ops, this.#accessControl, { get: new Set(), set: new Set() });
   }
 
