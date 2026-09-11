@@ -104,6 +104,8 @@ const TinyTabManagerPlugin = (instance) => {
   instance.description = 'Advanced tag manager.';
   instance.authors = ['JasminDreasond'];
   instance.contributors = ['JasminDreasond'];
+  instance.categories = ['tab-manager'];
+  instance.tags = ['management'];
 
   if (!(engine instanceof TinyServiceWorkerEngine)) {
     throw new TypeError('Plugin requires a TinyServiceWorkerEngine instance to function.');

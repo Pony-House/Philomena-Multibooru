@@ -13,6 +13,8 @@ const TinyPingPwa = (instance) => {
   instance.description = 'Ping tester plugin.';
   instance.authors = ['JasminDreasond'];
   instance.contributors = ['JasminDreasond'];
+  instance.categories = ['dev-tool'];
+  instance.tags = ['ping', 'test'];
 
   if (!(engine instanceof TinyServiceWorkerEngine)) {
     throw new TypeError('Plugin requires a TinyServiceWorkerEngine instance to function.');

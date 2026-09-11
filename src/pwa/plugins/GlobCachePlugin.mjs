@@ -23,6 +23,8 @@ const GlobCachePlugin = (instance, options) => {
   instance.description = 'The glob cache manager.';
   instance.authors = ['JasminDreasond'];
   instance.contributors = ['JasminDreasond'];
+  instance.categories = ['router-validator'];
+  instance.tags = ['glob', 'regex', 'cache'];
 
   // 1. Validation
   if (!(engine instanceof TinyServiceWorkerEngine)) {

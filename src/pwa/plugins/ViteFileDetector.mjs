@@ -32,6 +32,8 @@ const ViteFileDetectorPlugin = (instance, options = {}) => {
   instance.description = 'Vite File detector.';
   instance.authors = ['JasminDreasond'];
   instance.contributors = ['JasminDreasond'];
+  instance.categories = ['framework-validator'];
+  instance.tags = ['vite', 'framework', 'validator'];
 
   if (!(engine instanceof TinyServiceWorkerEngine)) {
     throw new TypeError('Plugin requires a TinyServiceWorkerEngine instance to function.');

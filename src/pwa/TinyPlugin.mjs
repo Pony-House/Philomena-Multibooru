@@ -8,14 +8,14 @@ const checkDestroy = createCheckDestroyed('TinyPlugin');
 /**
  * # TINY PLUGIN SYSTEM - ADVANCED DEVELOPER GUIDE
  *
- * This system uses a "Double-Layer Validation" and "Sandboxed Execution" architecture 
+ * This system uses a "Double-Layer Validation" and "Sandboxed Execution" architecture
  * to ensure maximum stability, security, and developer experience (DX).
  *
  * ## 1. CORE ENGINE SETUP (The Host)
  * - Create your main application class.
  * - Extend this class from `TinyPluginCore`.
  * - This enables your class to manage the plugin registry and lifecycle.
- * - **Access Control Configuration:** In the constructor, you can define how plugins 
+ * - **Access Control Configuration:** In the constructor, you can define how plugins
  *   interact with the engine:
  *    - `none`: All registered plugins have full access.
  *    - `whitelist`: Only plugins matching the `whitelist` (ID or Author) are allowed.
@@ -46,11 +46,11 @@ const checkDestroy = createCheckDestroyed('TinyPlugin');
  * - *Rule:* Expand the core via inheritance **before** implementing the plugin logic.
  *
  * ## 4. SECURITY & ACCESS CONTROL
- * - **Identity Verification:** For `cryptographic` mode, plugins must be signed 
+ * - **Identity Verification:** For `cryptographic` mode, plugins must be signed
  *   using `signPluginIdentity` during the build process.
- * - **Engine Protection:** The engine uses a `sandboxBlacklist` to prevent plugins 
+ * - **Engine Protection:** The engine uses a `sandboxBlacklist` to prevent plugins
  *   from accessing sensitive internal methods.
- * - **Proxy Enforcement:** Any attempt to mutate the plugin instance or access 
+ * - **Proxy Enforcement:** Any attempt to mutate the plugin instance or access
  *   forbidden engine properties will throw a `Security Error`.
  *
  * ## 5. INITIALIZATION
@@ -72,10 +72,10 @@ const checkDestroy = createCheckDestroyed('TinyPlugin');
  * const MyPlugin = (sandbox, options) => {
  *    // 1. Runtime Validation
  *    if (typeof options.key !== 'string') throw new TypeError('Option "key" must be a string.');
- *    
+ *
  *    // 2. Use the sandbox to interact with the engine
- *    const engine = sandbox.engine; 
- *    
+ *    const engine = sandbox.engine;
+ *
  *    // 3. Return the layer
  *    return new TinyPluginLayer();
  * };
@@ -91,6 +91,8 @@ const checkDestroy = createCheckDestroyed('TinyPlugin');
  * @typedef {Object} PluginIdentity
  * @property {string} id - The unique identifier of the plugin.
  * @property {string[]} authors - The list of authors of the plugin.
+ * @property {string[]} categories - The list of categories of the plugin.
+ * @property {string[]} tags - The list of tags of the plugin.
  */
 
 /**
@@ -99,6 +101,8 @@ const checkDestroy = createCheckDestroyed('TinyPlugin');
  *
  * @param {string} pluginId - The unique identifier of the plugin.
  * @param {string[]} authors - The list of authors of the plugin.
+ * @param {string[]} categories - The list of categories the plugin belongs to.
+ * @param {string[]} tags - The list of tags the plugin has.
  * @param {CryptoKey} privateKey - The RSA private key used for signing.
  * @param {CryptoAlgorithm} [algorithm] - The cryptographic algorithm to use for signing.
  * @returns {Promise<ArrayBuffer>} A promise that resolves to the digital signature.
@@ -107,6 +111,8 @@ const checkDestroy = createCheckDestroyed('TinyPlugin');
 export async function signPluginIdentity(
   pluginId,
   authors,
+  categories,
+  tags,
   privateKey,
   algorithm = { name: 'RSASSA-PKCS1-v1_5' },
 ) {
@@ -117,16 +123,24 @@ export async function signPluginIdentity(
   if (!Array.isArray(authors) || authors.some((a) => typeof a !== 'string')) {
     throw new TypeError('authors must be an array of strings.');
   }
+  if (!Array.isArray(categories) || categories.some((c) => typeof c !== 'string')) {
+    throw new TypeError('categories must be an array of strings.');
+  }
+  if (!Array.isArray(tags) || tags.some((t) => typeof t !== 'string')) {
+    throw new TypeError('tags must be an array of strings.');
+  }
   if (!(privateKey instanceof CryptoKey)) {
     throw new TypeError('privateKey must be a valid CryptoKey instance.');
   }
 
   // 2. Replicate the identity logic used in TinyPluginCore
-  // We sort authors to ensure the identity is deterministic
+  // We sort authors, categories, and tags to ensure the identity is deterministic
   /** @type {PluginIdentity} */
   const identityObject = {
     id: pluginId,
     authors: [...authors].sort(),
+    categories: [...categories].sort(),
+    tags: [...tags].sort(),
   };
   const identityString = JSON.stringify(identityObject);
 
@@ -193,18 +207,24 @@ class TinyPluginLayer {
  * @typedef {Object} BwList
  * @property {Set<BlackListValue>} ids - A set of restricted plugin IDs.
  * @property {Set<BlackListValue>} authors - A set of restricted author names.
+ * @property {Set<BlackListValue>} categories - A set of restricted plugin categories.
+ * @property {Set<BlackListValue>} tags - A set of restricted plugin tags.
  */
 
 /**
  * @typedef {Object} BwListArray
  * @property {BlackListValue[]} ids - An array of restricted plugin IDs.
  * @property {BlackListValue[]} authors - An array of restricted author names.
+ * @property {BlackListValue[]} categories - An array of restricted plugin categories.
+ * @property {BlackListValue[]} tags - An array of restricted plugin tags.
  */
 
 /**
  * @typedef {Object} BwListProtected
- * @property {readonly BlackListValue[]} ids - A read-only array of restricted plugin IDs.
- * @property {readonly BlackListValue[]} authors - A read-only array of restricted author names.
+ * @property {Readonly<BlackListValue[]>} ids - A read-only array of restricted plugin IDs.
+ * @property {Readonly<BlackListValue[]>} authors - A read-only array of restricted author names.
+ * @property {Readonly<BlackListValue[]>} categories - A read-only array of restricted plugin categories.
+ * @property {Readonly<BlackListValue[]>} tags - A read-only array of restricted plugin tags.
  */
 
 /**
@@ -250,8 +270,8 @@ class TinyPluginCore extends TinyDebugger {
     importAlgorithm: { name: 'HMAC', hash: 'sha256' },
     cryptoAlgorithm: { name: 'RSASSA-PKCS1-v1_5' },
     publicKey: null,
-    whitelist: { ids: new Set(), authors: new Set() },
-    blacklist: { ids: new Set(), authors: new Set() },
+    whitelist: { ids: new Set(), authors: new Set(), categories: new Set(), tags: new Set() },
+    blacklist: { ids: new Set(), authors: new Set(), categories: new Set(), tags: new Set() },
   };
 
   /** @type {Set<string>} */
@@ -315,6 +335,8 @@ class TinyPluginCore extends TinyDebugger {
     return Object.freeze({
       ids: Object.freeze([...this.#accessControl.whitelist.ids]),
       authors: Object.freeze([...this.#accessControl.whitelist.authors]),
+      categories: Object.freeze([...this.#accessControl.whitelist.categories]),
+      tags: Object.freeze([...this.#accessControl.whitelist.tags]),
     });
   }
 
@@ -326,6 +348,8 @@ class TinyPluginCore extends TinyDebugger {
     return Object.freeze({
       ids: Object.freeze([...this.#accessControl.blacklist.ids]),
       authors: Object.freeze([...this.#accessControl.blacklist.authors]),
+      categories: Object.freeze([...this.#accessControl.blacklist.categories]),
+      tags: Object.freeze([...this.#accessControl.blacklist.tags]),
     });
   }
 
@@ -410,6 +434,14 @@ class TinyPluginCore extends TinyDebugger {
           checkBlackList('whistlist authors', whitelist.authors);
           whitelist.authors.forEach((id) => this.#accessControl.whitelist.authors.add(id));
         }
+        if (typeof whitelist.categories !== 'undefined') {
+          checkBlackList('whistlist categories', whitelist.categories);
+          whitelist.categories.forEach((id) => this.#accessControl.whitelist.categories.add(id));
+        }
+        if (typeof whitelist.tags !== 'undefined') {
+          checkBlackList('whistlist tags', whitelist.tags);
+          whitelist.tags.forEach((id) => this.#accessControl.whitelist.tags.add(id));
+        }
       }
 
       if (isJsonObject(blacklist)) {
@@ -420,6 +452,14 @@ class TinyPluginCore extends TinyDebugger {
         if (typeof blacklist.authors !== 'undefined') {
           checkBlackList('blacklist authors', blacklist.authors);
           blacklist.authors.forEach((id) => this.#accessControl.blacklist.authors.add(id));
+        }
+        if (typeof blacklist.categories !== 'undefined') {
+          checkBlackList('whistlist categories', blacklist.categories);
+          blacklist.categories.forEach((id) => this.#accessControl.blacklist.categories.add(id));
+        }
+        if (typeof blacklist.tags !== 'undefined') {
+          checkBlackList('whistlist tags', blacklist.tags);
+          blacklist.tags.forEach((id) => this.#accessControl.blacklist.tags.add(id));
         }
       }
 
@@ -463,25 +503,41 @@ class TinyPluginCore extends TinyDebugger {
    * Validates if a plugin is permitted to access the engine's properties based on identity.
    * @param {string} pluginId - The unique identifier of the plugin.
    * @param {string[]} authors - The list of authors of the plugin.
+   * @param {string[]} categories - The list of categories of the plugin.
+   * @param {string[]} tags - The list of tags of the plugin.
    * @returns {boolean} True if access is granted, false otherwise.
    */
-  canAccessEngine(pluginId, authors) {
+  canAccessEngine(pluginId, authors, categories, tags) {
     const { mode, whitelist, blacklist } = this.#accessControl;
 
     if (mode === 'cryptographic') {
       return this.#verifiedPlugins.has(pluginId);
     }
 
+    /**
+     * Helper to check if a value matches a set or if the set allows all via '*'
+     * @param {string} val
+     * @param {Set<BlackListValue>} set
+     * @returns {boolean}
+     */
+    const isMatch = (val, set) => set.has('*') || set.has(val);
+
     if (mode === 'whitelist') {
-      const isIdAllowed = whitelist.ids.has(pluginId);
-      const isAuthorAllowed = authors.some((author) => whitelist.authors.has(author));
-      return isIdAllowed || isAuthorAllowed;
+      const isIdAllowed = isMatch(pluginId, whitelist.ids);
+      const isAuthorAllowed = authors.some((a) => isMatch(a, whitelist.authors));
+      const isCategoryAllowed = categories.some((c) => isMatch(c, whitelist.categories));
+      const isTagAllowed = tags.some((t) => isMatch(t, whitelist.tags));
+
+      return isIdAllowed || isAuthorAllowed || isCategoryAllowed || isTagAllowed;
     }
 
     if (mode === 'blacklist') {
-      const isIdBlocked = blacklist.ids.has(pluginId);
-      const isAuthorBlocked = authors.some((author) => blacklist.authors.has(author));
-      return !isIdBlocked && !isAuthorBlocked;
+      const isIdBlocked = isMatch(pluginId, blacklist.ids);
+      const isAuthorBlocked = authors.some((a) => isMatch(a, blacklist.authors));
+      const isCategoryBlocked = categories.some((c) => isMatch(c, blacklist.categories));
+      const isTagBlocked = tags.some((t) => isMatch(t, blacklist.tags));
+
+      return !isIdBlocked && !isAuthorBlocked && !isCategoryBlocked && !isTagBlocked;
     }
 
     return true; // 'none' mode allows everyone
@@ -598,6 +654,14 @@ class TinyPluginCore extends TinyDebugger {
 
     const { mode, whitelist, blacklist } = this.#accessControl;
 
+    /**
+     * Helper to check if a value matches a set or if the set allows all via '*'
+     * @param {string} val
+     * @param {Set<BlackListValue>} set
+     * @returns {boolean}
+     */
+    const isMatch = (val, set) => set.has('*') || set.has(val);
+
     // If mode is 'none', access is granted to all registered plugins by default.
     if (mode === 'none') {
       return plugin;
@@ -605,16 +669,26 @@ class TinyPluginCore extends TinyDebugger {
 
     // Whitelist mode: Only plugins whose ID or authors match the whitelist are returned.
     if (mode === 'whitelist') {
-      const isIdAllowed = whitelist.ids.has(targetId);
-      const isAuthorAllowed = plugin.authors.some((author) => whitelist.authors.has(author));
-      return isIdAllowed || isAuthorAllowed ? plugin : undefined;
+      const isIdAllowed = isMatch(targetId, whitelist.ids);
+      const isAuthorAllowed = plugin.authors.some((a) => isMatch(a, whitelist.authors));
+      const isCategoryAllowed = plugin.categories.some((c) => isMatch(c, whitelist.categories));
+      const isTagAllowed = plugin.tags.some((t) => isMatch(t, whitelist.tags));
+
+      return isIdAllowed || isAuthorAllowed || isCategoryAllowed || isTagAllowed
+        ? plugin
+        : undefined;
     }
 
     // Blacklist mode: Plugins matching the blacklist (ID or Author) are blocked.
     if (mode === 'blacklist') {
-      const isIdBlocked = blacklist.ids.has(targetId);
-      const isAuthorBlocked = plugin.authors.some((author) => blacklist.authors.has(author));
-      return isIdBlocked || isAuthorBlocked ? undefined : plugin;
+      const isIdBlocked = isMatch(targetId, blacklist.ids);
+      const isAuthorBlocked = plugin.authors.some((a) => isMatch(a, blacklist.authors));
+      const isCategoryBlocked = plugin.categories.some((c) => isMatch(c, blacklist.categories));
+      const isTagBlocked = plugin.tags.some((t) => isMatch(t, blacklist.tags));
+
+      return isIdBlocked || isAuthorBlocked || isCategoryBlocked || isTagBlocked
+        ? undefined
+        : plugin;
     }
 
     // Cryptographic mode: Only plugins that have been successfully verified are returned.
@@ -727,6 +801,10 @@ class TinyPlugin extends TinyDebugger {
   #authors = new Set();
   /** @type {Set<string>} The list of contributors to the plugin. */
   #contributors = new Set();
+  /** @type {Set<string>} The categories of the plugin. */
+  #categories = new Set();
+  /** @type {Set<string>} The tags of the plugin. */
+  #tags = new Set();
   /** @type {TinyVersion<VersionString>|null} The version string of the plugin. */
   #version = null;
   /** @type {Engine} The engine instance this plugin is attached to. */
@@ -912,6 +990,62 @@ class TinyPlugin extends TinyDebugger {
   }
 
   /**
+   * Gets the categories of the plugin.
+   * @returns {readonly string[]} The plugin categories.
+   */
+  get categories() {
+    checkDestroy(this.#isDestroyed);
+    if (this.#categories.size === 0) throw new Error('Plugin categories is not set.');
+    return Object.freeze([...this.#categories]);
+  }
+
+  /**
+   * Sets the categories of the plugin.
+   * @param {string[]} value - The new list of categories.
+   * @throws {Error} If the categories are already set.
+   * @throws {TypeError} If the value is not an array of non-empty strings or is empty.
+   */
+  set categories(value) {
+    checkDestroy(this.#isDestroyed);
+    if (this.#categories.size !== 0) throw new Error('Categories are already set.');
+    if (
+      !Array.isArray(value) ||
+      !value.every((v) => typeof v === 'string' && v.trim().length !== 0)
+    )
+      throw new TypeError('Categories must be an array of non-empty strings.');
+    if (value.length === 0) throw new TypeError('Categories cannot be empty.');
+    value.forEach((v) => this.#categories.add(v));
+  }
+
+  /**
+   * Gets the tags of the plugin.
+   * @returns {readonly string[]} The plugin tags.
+   */
+  get tags() {
+    checkDestroy(this.#isDestroyed);
+    if (this.#tags.size === 0) throw new Error('Plugin tags is not set.');
+    return Object.freeze([...this.#tags]);
+  }
+
+  /**
+   * Sets the tags of the plugin.
+   * @param {string[]} value - The new list of tags.
+   * @throws {Error} If the tags are already set.
+   * @throws {TypeError} If the value is not an array of non-empty strings or is empty.
+   */
+  set tags(value) {
+    checkDestroy(this.#isDestroyed);
+    if (this.#tags.size !== 0) throw new Error('Tags are already set.');
+    if (
+      !Array.isArray(value) ||
+      !value.every((v) => typeof v === 'string' && v.trim().length !== 0)
+    )
+      throw new TypeError('Tags must be an array of non-empty strings.');
+    if (value.length === 0) throw new TypeError('Tags cannot be empty.');
+    value.forEach((v) => this.#tags.add(v));
+  }
+
+  /**
    * Gets the version of the plugin as a string.
    * @returns {VersionString} The plugin version.
    */
@@ -955,7 +1089,14 @@ class TinyPlugin extends TinyDebugger {
     checkDestroy(this.#isDestroyed);
 
     // Identity-based security check
-    if (!this.#engine.canAccessEngine(this.#id, [...this.#authors])) {
+    if (
+      !this.#engine.canAccessEngine(
+        this.#id,
+        [...this.#authors],
+        [...this.#categories],
+        [...this.#tags],
+      )
+    ) {
       throw new Error(
         `Security Error: Access to the engine is denied for plugin "${this.id}" based on current access control rules.`,
       );
@@ -1029,7 +1170,15 @@ class TinyPlugin extends TinyDebugger {
    */
   #createSandbox() {
     /** @type {BlackListValue[]} */
-    const allowedEditKeys = ['id', 'version', 'description', 'authors', 'contributors'];
+    const allowedEditKeys = [
+      'id',
+      'version',
+      'description',
+      'authors',
+      'contributors',
+      'categories',
+      'tags',
+    ];
 
     /** @type {BlackListValue[]} */
     const allowedGetKeys = [
@@ -1130,6 +1279,8 @@ class TinyPlugin extends TinyDebugger {
       if (this.#description.length === 0) throw new Error('Plugin description is not set.');
       if (this.#authors.size === 0) throw new Error('Plugin authors is not set.');
       if (this.#contributors.size === 0) throw new Error('Plugin contributors is not set.');
+      if (this.#categories.size === 0) throw new Error('Plugin categories is not set.');
+      if (this.#tags.size === 0) throw new Error('Plugin tags is not set.');
       if (!this.#version) throw new Error('Plugin version is not set.');
 
       this.#isReady = true;
