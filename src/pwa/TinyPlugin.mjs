@@ -61,9 +61,71 @@ const checkDestroy = createCheckDestroyed('TinyPlugin');
  * };
  */
 
+/** @typedef {AlgorithmIdentifier | RsaPssParams | EcdsaParams} CryptoAlgorithm - A valid Web Crypto API algorithm identifier or parameter object. */
+
 /**
- * @typedef {import('tiny-essentials/libs/tools/TinyDebugger').DebuggerConstructor} DebuggerConstructor
+ * @typedef {"pkcs8" | "raw" | "spki"} ImportKeyFormat - The format used when importing a cryptographic key.
  */
+
+/**
+ * @typedef {Object} PluginIdentity
+ * @property {string} id - The unique identifier of the plugin.
+ * @property {string[]} authors - The list of authors of the plugin.
+ */
+
+/**
+ * Signs a plugin's identity using a private key.
+ * This function is intended for use by plugin authors during the build/release process.
+ *
+ * @param {string} pluginId - The unique identifier of the plugin.
+ * @param {string[]} authors - The list of authors of the plugin.
+ * @param {CryptoKey} privateKey - The RSA private key used for signing.
+ * @param {CryptoAlgorithm} [algorithm] - The cryptographic algorithm to use for signing.
+ * @returns {Promise<ArrayBuffer>} A promise that resolves to the digital signature.
+ * @throws {TypeError} If the inputs are invalid or the signing process fails.
+ */
+export async function signPluginIdentity(
+  pluginId,
+  authors,
+  privateKey,
+  algorithm = { name: 'RSASSA-PKCS1-v1_5' },
+) {
+  // 1. Validate inputs
+  if (typeof pluginId !== 'string' || pluginId.length === 0) {
+    throw new TypeError('pluginId must be a non-empty string.');
+  }
+  if (!Array.isArray(authors) || authors.some((a) => typeof a !== 'string')) {
+    throw new TypeError('authors must be an array of strings.');
+  }
+  if (!(privateKey instanceof CryptoKey)) {
+    throw new TypeError('privateKey must be a valid CryptoKey instance.');
+  }
+
+  // 2. Replicate the identity logic used in TinyPluginCore
+  // We sort authors to ensure the identity is deterministic
+  /** @type {PluginIdentity} */
+  const identityObject = {
+    id: pluginId,
+    authors: [...authors].sort(),
+  };
+  const identityString = JSON.stringify(identityObject);
+
+  // 3. Encode the identity string to bytes
+  const encoder = new TextEncoder();
+  const dataBytes = encoder.encode(identityString);
+
+  try {
+    // 4. Sign the data using RSASSA-PKCS1-v1_5
+    const signature = await crypto.subtle.sign(algorithm, privateKey, dataBytes);
+    return signature;
+  } catch (error) {
+    throw new Error(
+      `Failed to sign plugin identity: ${error instanceof Error ? error.message : 'Unknown error'}`,
+    );
+  }
+}
+
+/** @typedef {import('tiny-essentials/libs/tools/TinyDebugger').DebuggerConstructor} DebuggerConstructor - The constructor function for a debugger instance. */
 
 /**
  * Represents the isolated runtime environment or state container for a plugin.
@@ -87,7 +149,7 @@ class TinyPluginLayer {
   }
 }
 
-/** @typedef {string|symbol} BlackListValue */
+/** @typedef {string|symbol} BlackListValue - The type of value that can be stored in a blacklist (either a string or a symbol). */
 
 /**
  * @typedef {Object} BlackListCore
@@ -136,7 +198,9 @@ class TinyPluginLayer {
  * @property {BwListArray} [whitelist] - The whitelist configuration.
  * @property {BwListArray} [blacklist] - The blacklist configuration.
  * @property {string} [publicKey] - The public key used for cryptographic verification.
- * @property {string} [cryptoAlgorithm='sha256'] - The cryptographic algorithm to use.
+ * @property {CryptoAlgorithm} [cryptoAlgorithm] - The algorithm used for signature verification.
+ * @property {CryptoAlgorithm} [importAlgorithm] - The algorithm used for importing the public key.
+ * @property {ImportKeyFormat} [importKeyFormat] - The format of the key being imported.
  */
 
 /**
@@ -145,7 +209,9 @@ class TinyPluginLayer {
  * @property {BwList} whitelist - The whitelist configuration.
  * @property {BwList} blacklist - The blacklist configuration.
  * @property {string|null} publicKey - The public key used for cryptographic verification.
- * @property {string} cryptoAlgorithm - The cryptographic algorithm to use.
+ * @property {CryptoAlgorithm} cryptoAlgorithm - The algorithm used for signature verification.
+ * @property {CryptoAlgorithm} importAlgorithm - The algorithm used for importing the public key.
+ * @property {ImportKeyFormat} importKeyFormat - The format of the key being imported.
  */
 
 /**
@@ -160,7 +226,9 @@ class TinyPluginCore extends TinyDebugger {
   /** @type {PluginAccessControl} */
   #accessControl = {
     mode: 'none',
-    cryptoAlgorithm: 'sha256',
+    importKeyFormat: 'raw',
+    importAlgorithm: { name: 'HMAC', hash: 'sha256' },
+    cryptoAlgorithm: { name: 'RSASSA-PKCS1-v1_5' },
     publicKey: null,
     whitelist: { ids: new Set(), authors: new Set() },
     blacklist: { ids: new Set(), authors: new Set() },
@@ -259,8 +327,8 @@ class TinyPluginCore extends TinyDebugger {
   constructor(ops) {
     super(ops.logCfg);
     /**
-     * @param {string} key
-     * @param {BlackListValue[]} values
+     * @param {string} key - The key to check.
+     * @param {BlackListValue[]} values - The values to check.
      */
     const checkBlackList = (key, values) => {
       if (
@@ -284,7 +352,15 @@ class TinyPluginCore extends TinyDebugger {
     }
 
     if (isJsonObject(ops?.accessControl)) {
-      const { mode, whitelist, blacklist, publicKey, cryptoAlgorithm } = ops.accessControl;
+      const {
+        mode,
+        whitelist,
+        blacklist,
+        publicKey,
+        cryptoAlgorithm,
+        importAlgorithm,
+        importKeyFormat,
+      } = ops.accessControl;
 
       if (
         mode !== 'none' &&
@@ -301,11 +377,6 @@ class TinyPluginCore extends TinyDebugger {
         if (typeof publicKey !== 'string') {
           throw new TypeError(
             'In cryptographic mode, accessControl.publicKey must be a string (PEM format).',
-          );
-        }
-        if (typeof cryptoAlgorithm !== 'string') {
-          throw new TypeError(
-            'In cryptographic mode, accessControl.cryptoAlgorithm must be a string (Crypto algorithm).',
           );
         }
       }
@@ -334,8 +405,12 @@ class TinyPluginCore extends TinyDebugger {
 
       if (typeof mode === 'string') this.#accessControl.mode = mode;
       if (typeof publicKey === 'string') this.#accessControl.publicKey = publicKey;
-      if (typeof cryptoAlgorithm === 'string')
+      if (typeof cryptoAlgorithm !== 'undefined')
         this.#accessControl.cryptoAlgorithm = cryptoAlgorithm;
+      if (typeof importAlgorithm !== 'undefined')
+        this.#accessControl.importAlgorithm = importAlgorithm;
+      if (typeof importKeyFormat !== 'undefined')
+        this.#accessControl.importKeyFormat = importKeyFormat;
     }
   }
 
@@ -400,7 +475,7 @@ class TinyPluginCore extends TinyDebugger {
    * @returns {Promise<boolean>} A promise that resolves to true if the signature is valid, false otherwise.
    */
   async verifyPluginSignature(pluginId, authors, signature) {
-    const { publicKey, cryptoAlgorithm } = this.#accessControl;
+    const { publicKey, cryptoAlgorithm, importKeyFormat, importAlgorithm } = this.#accessControl;
     const identity = this.#createIdChecker(pluginId, authors);
 
     try {
@@ -421,15 +496,15 @@ class TinyPluginCore extends TinyDebugger {
       const signatureBuffer = encoder.encode(identity);
 
       const cryptoKey = await crypto.subtle.importKey(
-        'raw',
+        importKeyFormat,
         importedPublicKey,
-        { name: 'HMAC', hash: cryptoAlgorithm },
+        importAlgorithm,
         false,
         ['sign', 'verify'],
       );
 
       const isValid = await crypto.subtle.verify(
-        { name: 'RSASSA-PKCS1-v1_5' },
+        cryptoAlgorithm,
         cryptoKey,
         signatureBuffer,
         dataBytes,
@@ -477,7 +552,7 @@ class TinyPluginCore extends TinyDebugger {
 
   /**
    * Retrieves a plugin instance by its unique identifier.
-   * @param {string} key - The unique identifier of the plugin to retrieve.
+   * @param {string} key - The unique identifier of the plugin.
    * @returns {TinyPlugin<this, TinyPluginLayer, string, string, any[]>|undefined} The plugin instance if found, otherwise undefined.
    */
   getPlugin(key) {
@@ -549,7 +624,7 @@ class TinyPluginCore extends TinyDebugger {
  * @template {TinyPluginLayer} Layer - The type of the layer returned by the installer.
  * @template {string} IdString - The type of the plugin's unique identifier.
  * @template {string} VersionString - The type of the plugin's version.
- * @template {any[]} Options - The type of the configuration options.
+ * @template {any[]} Options - The type of the plugin's configuration options.
  *
  * @typedef { (plugin: TinyPlugin<Engine, Layer, IdString, VersionString, Options>, ...options: Options) => Layer } TinyPluginInstaller - The plugin instance being initialized.
  */
@@ -559,11 +634,11 @@ class TinyPluginCore extends TinyDebugger {
  * It encapsulates the plugin's identity (id and version), its connection to the engine,
  * the installation logic, and any associated configuration options.
  *
- * @template {TinyPluginCore} Engine
- * @template {TinyPluginLayer} Layer
- * @template {string} IdString
- * @template {string} VersionString
- * @template {any[]} Options
+ * @template {TinyPluginCore} Engine - The type of the engine.
+ * @template {TinyPluginLayer} Layer - The type of the layer.
+ * @template {string} IdString - The type of the plugin's unique identifier.
+ * @template {string} VersionString - The type of the plugin's version.
+ * @template {any[]} Options - The type of the plugin's configuration options.
  */
 class TinyPlugin extends TinyDebugger {
   /** @type {DebuggerConstructor} */
@@ -597,7 +672,7 @@ class TinyPlugin extends TinyDebugger {
    * @template {TinyPluginLayer} ExternalLayer - The type of the plugin layer.
    * @template {string} ExternalIdString - The type of the plugin ID.
    * @template {string} ExternalVersionString - The type of the plugin version.
-   * @template {any[]} ExternalOptions - The type of the configuration options.
+   * @template {any[]} ExternalOptions - The type of the plugin's configuration options.
    * @param {ExternalEngine} engine - The main instance connected to plugin.
    * @param {TinyPluginInstaller<ExternalEngine, ExternalLayer, ExternalIdString, ExternalVersionString, ExternalOptions>} plugin - The plugin instance to be registered.
    * @param {ExternalOptions} options - Configuration options for the plugin.
@@ -623,7 +698,6 @@ class TinyPlugin extends TinyDebugger {
 
   /** @type {BlackListCore} */
   #sandboxBlacklist = { get: new Set(), set: new Set() };
-
   /** @type {IdString} The unique id of the plugin. */
   // @ts-ignore
   #id = '';
@@ -725,7 +799,7 @@ class TinyPlugin extends TinyDebugger {
 
   /**
    * Sets the unique identifier for the plugin.
-   * @param {IdString} value - The new id for the plugin.
+   * @param {IdString} value - The new unique identifier for the plugin.
    * @throws {Error} If the id is already set.
    * @throws {TypeError} If the value is not a string or is empty.
    */
@@ -773,9 +847,9 @@ class TinyPlugin extends TinyDebugger {
 
   /**
    * Sets the list of authors for the plugin.
-   * @param {string[]} value - The new authors list for the plugin.
-   * @throws {Error} If the authors is already set.
-   * @throws {TypeError} If the value is not a array of strings or is empty.
+   * @param {string[]} value - The new list of authors for the plugin.
+   * @throws {Error} If the authors are already set.
+   * @throws {TypeError} If the value is not an array of non-empty strings or is empty.
    */
   set authors(value) {
     checkDestroy(this.#isDestroyed);
@@ -801,9 +875,9 @@ class TinyPlugin extends TinyDebugger {
 
   /**
    * Sets the list of contributors for the plugin.
-   * @param {string[]} value - The new contributors list for the plugin.
-   * @throws {Error} If the contributors is already set.
-   * @throws {TypeError} If the value is not a array of strings or is empty.
+   * @param {string[]} value - The new list of contributors for the plugin.
+   * @throws {Error} If the contributors are already set.
+   * @throws {TypeError} If the value is not an array of non-empty strings or is empty.
    */
   set contributors(value) {
     checkDestroy(this.#isDestroyed);
@@ -829,7 +903,7 @@ class TinyPlugin extends TinyDebugger {
 
   /**
    * Sets the version of the plugin.
-   * @param {VersionString} value - The new version string.
+   * @param {VersionString} value - The new version string for the plugin.
    * @throws {Error} If the version is already set.
    * @throws {TypeError} If the value is not a string or is empty.
    */
@@ -897,7 +971,7 @@ class TinyPlugin extends TinyDebugger {
 
   /**
    * Gets the configuration options of the plugin.
-   * @returns {Options} A read-only array of options.
+   * @returns {Options} The plugin configuration options.
    */
   get options() {
     checkDestroy(this.#isDestroyed);
@@ -1009,7 +1083,7 @@ class TinyPlugin extends TinyDebugger {
   /**
    * Starts the plugin lifecycle by calling the installer.
    * @throws {Error} If the plugin is already ready.
-   * @throws {Error} If id, version, description, authors, contributors, or layer is not set.
+   * @throws {Error} If the initialization fails.
    */
   start() {
     checkDestroy(this.#isDestroyed);
