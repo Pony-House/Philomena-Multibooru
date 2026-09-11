@@ -162,24 +162,90 @@ export async function signPluginIdentity(
 /** @typedef {import('tiny-essentials/libs/tools/TinyDebugger').DebuggerConstructor} DebuggerConstructor - The constructor function for a debugger instance. */
 
 /**
+ * @typedef {Object} LayerSandboxConfig
+ * @property {BlackListCorePartial} [sandboxBlacklist] - Configuration for the layer's sandbox.
+ */
+
+/**
  * Represents the isolated runtime environment or state container for a plugin.
  * It manages the 'ready' state to ensure the plugin's initialization logic
  * is only executed once.
  */
 class TinyPluginLayer {
   #isReady = false;
+  /** @type {BlackListCore} */
+  #sandboxBlacklist = { get: new Set(), set: new Set() };
+
+  /**
+   * @param {LayerSandboxConfig} [config] - Configuration for the layer.
+   */
+  constructor(config) {
+    if (isJsonObject(config?.sandboxBlacklist)) {
+      const { get, set } = config.sandboxBlacklist;
+      if (typeof get !== 'undefined') {
+        if (!Array.isArray(get))
+          throw new TypeError('Layer sandbox blacklist "get" must be an array.');
+        get.forEach((v) => this.#sandboxBlacklist.get.add(v));
+      }
+      if (typeof set !== 'undefined') {
+        if (!Array.isArray(set))
+          throw new TypeError('Layer sandbox blacklist "set" must be an array.');
+        set.forEach((v) => this.#sandboxBlacklist.set.add(v));
+      }
+    }
+  }
+
   /**
    * Internal method to initialize the layer state.
    * @template {any[]} Args - The type of arguments passed to the callback.
    * @param {(...args: Args) => void} [callback] - An optional callback function to execute during initialization.
    * @param {Args} args - The arguments to be passed to the callback.
    * @returns {this} - The current instance of TinyPluginLayer.
+   * @throws {Error} If the layer has already been initialized.
    */
   _startLayer(callback, ...args) {
-    if (this.#isReady) throw new Error('');
-    if (callback) callback(...args);
+    if (this.#isReady) {
+      throw new Error('TinyPluginLayer: The layer has already been initialized.');
+    }
+    if (typeof callback === 'function') callback(...args);
     this.#isReady = true;
     return this;
+  }
+
+  /**
+   * Creates a sandboxed proxy for the layer to prevent unauthorized access.
+   * This ensures that even if the layer is passed to external entities,
+   * its internal state and lifecycle methods remain protected.
+   * @returns {this} A proxied instance of the layer.
+   */
+  _createSandbox() {
+    const blacklist = {
+      get: this.#sandboxBlacklist.get,
+      set: this.#sandboxBlacklist.set,
+    };
+
+    return new Proxy(this, {
+      get(target, prop) {
+        if (blacklist.get.has(prop)) {
+          throw new Error(
+            `Security Error: Access to property "${String(prop)}" is denied by the layer sandbox.`,
+          );
+        }
+        const value = Reflect.get(target, prop, target);
+        return typeof value === 'function' ? value.bind(target) : value;
+      },
+      set(target, prop, newValue) {
+        if (blacklist.set.has(prop)) {
+          throw new Error(
+            'Security Error: Cannot modify read-only properties on the layer sandbox.',
+          );
+        }
+        return Reflect.set(target, prop, newValue);
+      },
+      setPrototypeOf() {
+        throw new Error('Security Error: Prototype manipulation is forbidden.');
+      },
+    });
   }
 }
 
@@ -781,7 +847,7 @@ class TinyPlugin extends TinyDebugger {
       { engine: engine, installer: plugin, logCfg: { ...TinyPlugin.#logCfg } },
       ...options,
     );
-    instance.start();
+    instance._startPlugin();
     // @ts-ignore
     if (engine.hasPlugin(instance))
       throw new Error(`A plugin with the name "${instance.id}" is already registered.`);
@@ -835,7 +901,7 @@ class TinyPlugin extends TinyDebugger {
   get layer() {
     checkDestroy(this.#isDestroyed);
     if (this.#layer === null) throw new Error('Plugin layer is not set.');
-    return this.#layer;
+    return this.#layer._createSandbox();
   }
 
   /**
@@ -1254,7 +1320,7 @@ class TinyPlugin extends TinyDebugger {
    * @throws {Error} If the plugin is already ready.
    * @throws {Error} If the initialization fails.
    */
-  start() {
+  _startPlugin() {
     checkDestroy(this.#isDestroyed);
     if (this.#isReady) throw new Error('Plugin is already ready.');
 
@@ -1277,10 +1343,10 @@ class TinyPlugin extends TinyDebugger {
       // 4. Final validation of core identity
       if (this.#id.length === 0) throw new Error('Plugin id is not set.');
       if (this.#description.length === 0) throw new Error('Plugin description is not set.');
-      if (this.#authors.size === 0) throw new Error('Plugin authors is not set.');
-      if (this.#contributors.size === 0) throw new Error('Plugin contributors is not set.');
-      if (this.#categories.size === 0) throw new Error('Plugin categories is not set.');
-      if (this.#tags.size === 0) throw new Error('Plugin tags is not set.');
+      if (this.#authors.size === 0) throw new Error('Plugin authors are not set.');
+      if (this.#contributors.size === 0) throw new Error('Plugin contributors are not set.');
+      if (this.#categories.size === 0) throw new Error('Plugin categories are not set.');
+      if (this.#tags.size === 0) throw new Error('Plugin tags are not set.');
       if (!this.#version) throw new Error('Plugin version is not set.');
 
       this.#isReady = true;
