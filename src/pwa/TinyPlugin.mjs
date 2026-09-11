@@ -176,6 +176,10 @@ class TinyPluginLayer {
   /** @type {BlackListCore} */
   #sandboxBlacklist = { get: new Set(), set: new Set() };
 
+  get isReady() {
+    return this.#isReady;
+  }
+
   /**
    * @param {LayerSandboxConfig} [config] - Configuration for the layer.
    */
@@ -1341,6 +1345,7 @@ class TinyPlugin extends TinyDebugger {
       }
 
       // 4. Final validation of core identity
+      if (!this.#layer.isReady) this.#layer._startLayer();
       if (this.#id.length === 0) throw new Error('Plugin id is not set.');
       if (this.#description.length === 0) throw new Error('Plugin description is not set.');
       if (this.#authors.size === 0) throw new Error('Plugin authors are not set.');
