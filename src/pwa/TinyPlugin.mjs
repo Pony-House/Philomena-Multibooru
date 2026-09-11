@@ -423,14 +423,15 @@ const createAccessControl = () => ({
 });
 
 /**
- * @template {TinyPlugin|TinyPluginLayer} InstanceObj
+ * @template {TinyPlugin<any, TinyPluginLayer, string, string, any[]>|TinyPluginLayer} InstanceObj
  * @param {InstanceObj} instance
  * @param {BlackListCoreProtected|null} engineSandboxBlacklist
  * @param {BlackListCore|null} sandboxBlacklist
  * @param {BlackListValue[]} setKeys - Allowed set keys.
  * @param {BlackListValue[]} getKeys - Allowed get keys.
- * @param {BlackListValue[]} [beGetKeys] - Blocked engine get keys
- * @param {BlackListValue[]} [beSetKeys] - Blocked engine set keys
+ * @param {BlackListValue[]} [beGetKeys] - Blocked engine get keys.
+ * @param {BlackListValue[]} [beSetKeys] - Blocked engine set keys.
+ * @returns {InstanceObj}
  */
 const createSandbox = (
   instance,
