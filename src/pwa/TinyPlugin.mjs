@@ -201,7 +201,7 @@ export const createPluginIdChecker = (pluginId, authors) => {
 /**
  * @param {TinyPluginConstructor} ops
  * @param {PluginAccessControl} accessControl
- * @param {BlackListCore} sandboxBlacklist
+ * @param {BlackListCore} [sandboxBlacklist]
  */
 const pluginConstrctor = (ops, accessControl, sandboxBlacklist) => {
   /**
@@ -217,7 +217,7 @@ const pluginConstrctor = (ops, accessControl, sandboxBlacklist) => {
     }
   };
 
-  if (isJsonObject(ops?.sandboxBlacklist)) {
+  if (isJsonObject(sandboxBlacklist) && isJsonObject(ops?.sandboxBlacklist)) {
     const { get, set } = ops.sandboxBlacklist;
     if (typeof get !== 'undefined') {
       checkBlackList('get', get);
@@ -425,8 +425,8 @@ const createAccessControl = () => ({
 /**
  * @template {TinyPlugin|TinyPluginLayer} InstanceObj
  * @param {InstanceObj} instance
- * @param {BlackListCoreProtected} engineSandboxBlacklist
- * @param {BlackListCore} sandboxBlacklist
+ * @param {BlackListCoreProtected|null} engineSandboxBlacklist
+ * @param {BlackListCore|null} sandboxBlacklist
  * @param {BlackListValue[]} setKeys - Allowed set keys.
  * @param {BlackListValue[]} getKeys - Allowed get keys.
  * @param {BlackListValue[]} [beGetKeys] - Blocked engine get keys
@@ -448,15 +448,17 @@ const createSandbox = (
   const allowedGetKeys = [...allowedSetKeys, ...getKeys];
 
   /** @type {BlackListCoreProtected} */
-  const coreBlacklist = engineSandboxBlacklist ?? { get: {}, set: {} };
+  const coreBlacklist = engineSandboxBlacklist ?? { get: [], set: [] };
   /** @type {BlackListValue[]} */
   const blockedGetKeys = [...(beGetKeys ?? []), ...coreBlacklist.get];
 
   /** @type {BlackListValue[]} */
   const blockedSetKeys = [...blockedGetKeys, ...coreBlacklist.set, ...(beSetKeys ?? [])];
 
-  blockedGetKeys.forEach((key) => sandboxBlacklist.get.add(key));
-  blockedSetKeys.forEach((key) => sandboxBlacklist.set.add(key));
+  if (isJsonObject(sandboxBlacklist)) {
+    blockedGetKeys.forEach((key) => sandboxBlacklist.get.add(key));
+    blockedSetKeys.forEach((key) => sandboxBlacklist.set.add(key));
+  }
 
   return new Proxy(instance, {
     get(target, prop) {
@@ -547,7 +549,7 @@ class TinyPluginLayer {
    * @param {TinyPluginConstructor} [ops] - The configuration options.
    */
   constructor(ops = {}) {
-    pluginConstrctor(ops, this.#accessControl, { get: new Set(), set: new Set() });
+    pluginConstrctor(ops, this.#accessControl);
   }
 
   /**
@@ -615,8 +617,8 @@ class TinyPluginLayer {
   _createSandbox() {
     return createSandbox(
       this,
-      { set: [], get: [] },
-      { get: new Set(), set: new Set() },
+      null,
+      null,
       // Allowed set keys.
       [],
       // Allowed get keys.
