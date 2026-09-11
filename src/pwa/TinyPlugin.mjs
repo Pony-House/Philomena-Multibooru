@@ -621,11 +621,12 @@ class TinyPluginLayer {
       [],
       // Allowed get keys.
       [
+        'isReady',
         'accessControlMode',
         'accessControlWhitelist',
         'accessControlBlacklist',
         'verifyPluginSignature',
-        'canAccessEngine',
+        'canAccessLayer',
       ],
     );
   }
