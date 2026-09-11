@@ -83,9 +83,9 @@ const checkDestroy = createCheckDestroyed('TinyPlugin');
 
 /**
  * Helper to check if a value matches a set or if the set allows all via '*'
- * @param {string} val
- * @param {Set<BlackListValue>} set
- * @returns {boolean}
+ * @param {string} val - The value to be checked against the set.
+ * @param {Set<BlackListValue>} set - The set containing the allowed or blocked values.
+ * @returns {boolean} True if the value matches the set or the set contains a wildcard.
  */
 const isMatch = (val, set) => set.has('*') || set.has(val);
 
@@ -199,9 +199,9 @@ export const createPluginIdChecker = (pluginId, authors) => {
  */
 
 /**
- * @param {TinyPluginConstructor} ops
- * @param {PluginAccessControl} accessControl
- * @param {BlackListCore} [sandboxBlacklist]
+ * @param {TinyPluginConstructor} ops - The configuration options for the constructor.
+ * @param {PluginAccessControl} accessControl - The access control object to be configured.
+ * @param {BlackListCore} [sandboxBlacklist] - An optional blacklist for the sandbox.
  */
 const pluginConstrctor = (ops, accessControl, sandboxBlacklist) => {
   /**
@@ -411,7 +411,9 @@ const isAllowedPlugin = (
   return true; // 'none' mode allows everyone
 };
 
-/** @returns {PluginAccessControl} */
+/**
+ * @returns {PluginAccessControl} A new access control object with default settings.
+ */
 const createAccessControl = () => ({
   mode: 'none',
   importKeyFormat: 'raw',
@@ -423,15 +425,15 @@ const createAccessControl = () => ({
 });
 
 /**
- * @template {TinyPlugin<any, TinyPluginLayer, string, string, any[]>|TinyPluginLayer} InstanceObj
- * @param {InstanceObj} instance
- * @param {BlackListCoreProtected|null} engineSandboxBlacklist
- * @param {BlackListCore|null} sandboxBlacklist
- * @param {BlackListValue[]} setKeys - Allowed set keys.
- * @param {BlackListValue[]} getKeys - Allowed get keys.
- * @param {BlackListValue[]} [beGetKeys] - Blocked engine get keys.
- * @param {BlackListValue[]} [beSetKeys] - Blocked engine set keys.
- * @returns {InstanceObj}
+ * @template {TinyPlugin<any, TinyPluginLayer, string, string, any[]>|TinyPluginLayer} InstanceObj - The type of the object to be proxied.
+ * @param {InstanceObj} instance - The object to be proxied.
+ * @param {BlackListCoreProtected|null} engineSandboxBlacklist - The blacklist from the engine sandbox.
+ * @param {BlackListCore|null} sandboxBlacklist - The blacklist for the plugin sandbox.
+ * @param {BlackListValue[]} setKeys - The list of keys allowed to be set.
+ * @param {BlackListValue[]} getKeys - The list of keys allowed to be accessed.
+ * @param {BlackListValue[]} [beGetKeys] - Additional engine keys to be blocked for getting.
+ * @param {BlackListValue[]} [beSetKeys] - Additional engine keys to be blocked for setting.
+ * @returns {InstanceObj} A proxied version of the instance with restricted access.
  */
 const createSandbox = (
   instance,
@@ -507,6 +509,10 @@ class TinyPluginLayer {
   /** @type {PluginAccessControl} */
   #accessControl = createAccessControl();
 
+  /**
+   * Gets whether the layer is initialized and ready.
+   * @returns {boolean} True if the layer is ready, false otherwise.
+   */
   get isReady() {
     return this.#isReady;
   }
@@ -547,7 +553,7 @@ class TinyPluginLayer {
 
   /**
    * Initializes a new instance of the TinyPluginLayer class.
-   * @param {TinyPluginConstructor} [ops] - The configuration options.
+   * @param {TinyPluginConstructor} [ops] - The configuration options for the layer.
    */
   constructor(ops = {}) {
     pluginConstrctor(ops, this.#accessControl);
@@ -613,7 +619,7 @@ class TinyPluginLayer {
    * Creates a sandboxed proxy for the layer to prevent unauthorized access.
    * This ensures that even if the layer is passed to external entities,
    * its internal state and lifecycle methods remain protected.
-   * @returns {this} A proxied instance of the layer.
+   * @returns {this} The proxied instance of the layer.
    */
   _createSandbox() {
     return createSandbox(
@@ -956,7 +962,7 @@ class TinyPluginCore extends TinyDebugger {
  * the installation logic, and any associated configuration options.
  *
  * @template {TinyPluginCore} Engine - The type of the engine.
- * @template {TinyPluginLayer} Layer - The type of the layer.
+ * @template {TinyPluginLayer} Layer - The type of the plugin layer.
  * @template {string} IdString - The type of the plugin's unique identifier.
  * @template {string} VersionString - The type of the plugin's version.
  * @template {any[]} Options - The type of the plugin's configuration options.
@@ -973,7 +979,7 @@ class TinyPlugin extends TinyDebugger {
 
   /**
    * Gets the logging configuration for the TinyPlugin class.
-   * @returns {DebuggerConstructor} The current logging configuration.
+   * @returns {DebuggerConstructor} The logging configuration constructor.
    */
   static get logCfg() {
     return { ...TinyPlugin.#logCfg };
@@ -1057,7 +1063,7 @@ class TinyPlugin extends TinyDebugger {
 
   /**
    * Gets the plugin's layer instance.
-   * @returns {Layer} The plugin layer.
+   * @returns {Layer} The proxied plugin layer.
    */
   get layer() {
     checkDestroy(this.#isDestroyed);
