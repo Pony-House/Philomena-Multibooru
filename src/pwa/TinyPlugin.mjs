@@ -192,9 +192,11 @@ export async function signPluginIdentity(
  * Create a deterministic identity string.
  * @param {string} pluginId - The unique identifier of the plugin.
  * @param {string[]} authors - The list of authors of the plugin.
+ * @param {string[]} categories - The list of categories of the plugin.
+ * @param {string[]} tags - The list of tags of the plugin.
  * @returns {string} The deterministic identity string used for verification.
  */
-export const createPluginIdChecker = (pluginId, authors) => {
+export const createPluginIdChecker = (pluginId, authors, categories, tags) => {
   if (typeof pluginId !== 'string') {
     throw new TypeError('Security Error: Cryptographic mode enabled, but pluginId is missing.');
   }
@@ -210,6 +212,8 @@ export const createPluginIdChecker = (pluginId, authors) => {
   return JSON.stringify({
     id: pluginId,
     authors: [...authors].sort(),
+    categories: [...categories].sort(),
+    tags: [...tags].sort(),
   });
 };
 
@@ -338,6 +342,8 @@ const pluginConstrctor = (ops, accessControl, sandboxBlacklist) => {
  * @param {Set<string>} verifiedPlugins - The set of plugins that have already been verified.
  * @param {string} pluginId - The unique identifier of the plugin.
  * @param {string[]} authors - The list of authors of the plugin.
+ * @param {string[]} categories - The list of categories of the plugin.
+ * @param {string[]} tags - The list of tags of the plugin.
  * @param {string} signature - The cryptographic signature provided by the plugin.
  * @returns {Promise<boolean>} A promise that resolves to true if the signature is valid, false otherwise.
  */
@@ -346,10 +352,12 @@ export const verifyPluginSignature = async (
   verifiedPlugins,
   pluginId,
   authors,
+  categories,
+  tags,
   signature,
 ) => {
   const { publicKey, cryptoAlgorithm, importKeyFormat, importAlgorithm } = accessControl;
-  const identity = createPluginIdChecker(pluginId, authors);
+  const identity = createPluginIdChecker(pluginId, authors, categories, tags);
 
   try {
     if (typeof publicKey !== 'string') {
@@ -643,15 +651,19 @@ class TinyPluginLayer extends TinyDebugger {
    * Validates an asynchronous signature for the layer's scope.
    * @param {string} pluginId - The unique identifier.
    * @param {string[]} authors - The authors list.
+   * @param {string[]} categories - The categories list.
+   * @param {string[]} tags - The tags list.
    * @param {string} signature - The cryptographic signature.
    * @returns {Promise<boolean>} A promise that resolves to true if the signature is valid, false otherwise.
    */
-  async verifyPluginSignature(pluginId, authors, signature) {
+  async verifyPluginSignature(pluginId, authors, categories, tags, signature) {
     return verifyPluginSignature(
       this.#accessControl,
       this.#verifiedPlugins,
       pluginId,
       authors,
+      categories,
+      tags,
       signature,
     );
   }
@@ -887,15 +899,19 @@ class TinyPluginCore extends TinyDebugger {
    * Validate asynchronous encryption signature using the native browser API.
    * @param {string} pluginId - The unique identifier of the plugin.
    * @param {string[]} authors - The list of authors of the plugin.
+   * @param {string[]} categories - The list of categories of the plugin.
+   * @param {string[]} tags - The list of tags of the plugin.
    * @param {string} signature - The cryptographic signature.
    * @returns {Promise<boolean>} A promise that resolves to true if the signature is valid, false otherwise.
    */
-  async verifyPluginSignature(pluginId, authors, signature) {
+  async verifyPluginSignature(pluginId, authors, categories, tags, signature) {
     return verifyPluginSignature(
       this.#accessControl,
       this.#verifiedPlugins,
       pluginId,
       authors,
+      categories,
+      tags,
       signature,
     );
   }
