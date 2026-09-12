@@ -31,7 +31,7 @@ const checkDestroy = createCheckDestroyed('TinyPlugin');
  *
  * ## 3. ARCHITECTURAL INTEGRITY & SECURITY
  * - **NO MUTATION:** Never mutate the `plugin` instance or `engine` directly.
- * - **Dual-Layer Sandboxing:** 
+ * - **Dual-Layer Sandboxing:**
  *    1. `sandbox.engine` is a Proxy preventing access to blacklisted host methods.
  *    2. `sandbox` (the plugin proxy) prevents prototype mutation and restricts setters.
  * - **Extension:** If your plugin needs custom host methods, extend `TinyPluginCore` first, then use your custom class as the `Engine` generic type.
@@ -49,12 +49,12 @@ const checkDestroy = createCheckDestroyed('TinyPlugin');
  *  * &#64;template {any[]} Options
  *  * &#64;typedef {import('tiny-essentials/libs/plugin/TinyPlugin').TinyPluginInstaller<MyCustomEngine, Layer, Name, Version, Options>} MyCustomInstaller
  *  *\/
- * 
+ *
  * class MyCustomEngine extends TinyPluginCore {
  *   constructor() {
- *     super({ 
+ *     super({
  *       logCfg: { id: '[MyEngine]', logger: console, debugMode: true },
- *       accessControl: { mode: 'none' } 
+ *       accessControl: { mode: 'none' }
  *     });
  *   }
  * }
@@ -66,7 +66,7 @@ const checkDestroy = createCheckDestroyed('TinyPlugin');
  *  * &#64;typedef {Object} ExampleOptions
  *  * &#64;property {string} apiKey - Required API key for the plugin.
  *  *\/
- * 
+ *
  * /**
  *  * &#64;type {MyCustomInstaller<TinyPluginLayer, 'MyPlugin', '1.0.0', [ExampleOptions]>}
  *  *\/
@@ -102,10 +102,13 @@ const checkDestroy = createCheckDestroyed('TinyPlugin');
 /**
  * Helper to check if a value matches a set or if the set allows all via '*'
  * @param {string} val - The value to be checked against the set.
- * @param {Set<BlackListValue>} set - The set containing the allowed or blocked values.
+ * @param {Set<BlackListValue>| readonly BlackListValue[]} set - The set containing the allowed or blocked values.
  * @returns {boolean} True if the value matches the set or the set contains a wildcard.
  */
-const isMatch = (val, set) => set.has('*') || set.has(val);
+const isMatch = (val, set) =>
+  set instanceof Set
+    ? set.has('*') || set.has(val)
+    : set.indexOf('*') > -1 || set.indexOf(val) > -1;
 
 /** @typedef {AlgorithmIdentifier | RsaPssParams | EcdsaParams} CryptoAlgorithm - A valid Web Crypto API algorithm identifier or parameter object. */
 
@@ -387,8 +390,8 @@ export const verifyPluginSignature = async (
  * @param {readonly string[]} authors - The list of authors of the plugin.
  * @param {readonly string[]} categories - The list of categories of the plugin.
  * @param {readonly string[]} tags - The list of tags of the plugin.
- * @param {BwList} whitelist - The whitelist configuration.
- * @param {BwList} blacklist - The blacklist configuration.
+ * @param {BwList|BwListProtected} whitelist - The whitelist configuration.
+ * @param {BwList|BwListProtected} blacklist - The blacklist configuration.
  * @param {Set<string>} verifiedPlugins
  * @returns {boolean}
  */
@@ -606,9 +609,9 @@ class TinyPluginLayer extends TinyDebugger {
   /**
    * Validates if a plugin is permitted to access the layer based on identity.
    * @param {string} pluginId - The unique identifier of the plugin.
-   * @param {string[]} authors - The list of authors of the plugin.
-   * @param {string[]} categories - The list of categories of the plugin.
-   * @param {string[]} tags - The list of tags of the plugin.
+   * @param {readonly string[]} authors - The list of authors of the plugin.
+   * @param {readonly string[]} categories - The list of categories of the plugin.
+   * @param {readonly string[]} tags - The list of tags of the plugin.
    * @returns {boolean} True if access is granted, false otherwise.
    */
   canAccessLayer(pluginId, authors, categories, tags) {
@@ -850,9 +853,9 @@ class TinyPluginCore extends TinyDebugger {
   /**
    * Validates if a plugin is permitted to access the engine's properties based on identity.
    * @param {string} pluginId - The unique identifier of the plugin.
-   * @param {string[]} authors - The list of authors of the plugin.
-   * @param {string[]} categories - The list of categories of the plugin.
-   * @param {string[]} tags - The list of tags of the plugin.
+   * @param {readonly string[]} authors - The list of authors of the plugin.
+   * @param {readonly string[]} categories - The list of categories of the plugin.
+   * @param {readonly string[]} tags - The list of tags of the plugin.
    * @returns {boolean} True if access is granted, false otherwise.
    */
   canAccessEngine(pluginId, authors, categories, tags) {
@@ -892,6 +895,13 @@ class TinyPluginCore extends TinyDebugger {
    * @param {TinyPlugin<this, TinyPluginLayer, string, string, any[]>} plugin - The plugin instance to be registered.
    */
   _addPlugin(plugin) {
+    if (!(plugin instanceof TinyPlugin))
+      throw new TypeError('The provided plugin must be an instance of TinyPlugin.');
+    if (!this.canAccessEngine(plugin.id, plugin.authors, plugin.categories, plugin.tags)) {
+      throw new Error(
+        `Security Error: Access to the core is denied for plugin "${plugin.id}" based on current access control rules.`,
+      );
+    }
     this.#plugins.set(plugin.id, plugin);
   }
 
@@ -933,10 +943,14 @@ class TinyPluginCore extends TinyDebugger {
    * This method checks the target plugin's identity against the engine's
    * access control rules (whitelist/blacklist/cryptographic).
    *
+   * @template {TinyPlugin<this, TinyPluginLayer, string, string, any[]>} ExternalPlugin
    * @param {string} targetId - The unique identifier of the target plugin.
+   * @param {ExternalPlugin} externalPlugin - The external plugin trying to get the target plugin.
    * @returns {TinyPlugin<this, TinyPluginLayer, string, string, any[]>|undefined} The plugin instance if access is granted, otherwise undefined.
    */
-  _getPlugin(targetId) {
+  _getPlugin(targetId, externalPlugin) {
+    if (!(externalPlugin instanceof TinyPlugin))
+      throw new TypeError('The provided external plugin must be an instance of TinyPlugin.');
     const plugin = this.#plugins.get(targetId);
 
     // If the plugin doesn't exist or has been destroyed, it is not available.
@@ -944,19 +958,20 @@ class TinyPluginCore extends TinyDebugger {
       return undefined;
     }
 
-    const { mode, whitelist, blacklist } = this.#accessControl;
-    return isAllowedPlugin(
-      mode,
-      targetId,
-      plugin.authors,
-      plugin.categories,
-      plugin.tags,
-      whitelist,
-      blacklist,
-      this.#verifiedPlugins,
-    )
-      ? plugin
-      : undefined;
+    if (
+      !plugin.layer.canAccessLayer(
+        externalPlugin.id,
+        externalPlugin.authors,
+        externalPlugin.categories,
+        externalPlugin.tags,
+      )
+    ) {
+      throw new Error(
+        `Security Error: Access of the plugin "${targetId}" is denied for plugin "${externalPlugin.id}" based on current plugin access control rules.`,
+      );
+    }
+
+    return plugin;
   }
 
   /**
@@ -1123,7 +1138,7 @@ class TinyPlugin extends TinyDebugger {
    */
   getPlugin(id) {
     checkDestroy(this.#isDestroyed);
-    return this.#engine._getPlugin(id);
+    return this.#engine._getPlugin(id, this);
   }
 
   /**
@@ -1451,7 +1466,7 @@ class TinyPlugin extends TinyDebugger {
         'isDestroyed',
       ],
       // Blocked engine get keys
-      ['getPlugin', 'plugins', 'installPlugin', '_addPlugin', 'destroyPlugins'],
+      ['getPlugin', '_getPlugin', 'plugins', 'installPlugin', '_addPlugin', 'destroyPlugins'],
       // Blocked engine set keys
       [
         'accessControlMode',
