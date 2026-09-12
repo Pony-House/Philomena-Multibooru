@@ -250,7 +250,7 @@ const pluginConstrctor = (ops, accessControl, sandboxBlacklist) => {
  * @param {string[]} authors - The list of authors of the plugin.
  * @param {string[]} categories - The list of categories of the plugin.
  * @param {string[]} tags - The list of tags of the plugin.
- * @param {string} signature - The cryptographic signature provided by the plugin.
+ * @param {string|BufferSource} signature - The cryptographic signature provided by the plugin.
  * @returns {Promise<boolean>} A promise that resolves to true if the signature is valid, false otherwise.
  */
 export const verifyPluginSignature = async (
@@ -269,16 +269,21 @@ export const verifyPluginSignature = async (
     if (typeof publicKey !== 'string') {
       throw new TypeError('Security Error: Cryptographic mode enabled, but public key is missing.');
     }
-    if (typeof signature !== 'string') {
+
+    if (
+      typeof signature !== 'string' &&
+      !(signature instanceof ArrayBuffer) &&
+      !(signature instanceof Uint8Array)
+    ) {
       throw new TypeError(
-        'Security Error: Cryptographic mode enabled, but signature key is missing.',
+        'Security Error: Cryptographic mode enabled, but signature is invalid (must be string, ArrayBuffer, or Uint8Array).',
       );
     }
 
     const encoder = new TextEncoder();
     const dataBytes = encoder.encode(identity);
     const importedPublicKey = encoder.encode(publicKey);
-    const signatureBuffer = encoder.encode(identity);
+    const signatureBuffer = typeof signature === 'string' ? encoder.encode(signature) : signature;
 
     const cryptoKey = await crypto.subtle.importKey(
       importKeyFormat,
