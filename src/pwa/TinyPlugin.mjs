@@ -981,7 +981,7 @@ class TinyPluginCore extends TinyDebugger {
       )
     ) {
       throw new Error(
-        `Security Error: Access of the plugin "${targetId}" is denied for plugin "${externalPlugin.id}" based on current plugin access control rules.`,
+        `Security Error: Access to the plugin "${targetId}" is denied for plugin "${externalPlugin.id}" based on current plugin access control rules.`,
       );
     }
 
