@@ -126,7 +126,7 @@ const isMatch = (val, set) =>
 
 /**
  * Signs a plugin's identity using a private key.
- * This function is intended for use by plugin authors during the build/release process.
+ * This function is intended to be used by plugin authors during the build/release process.
  *
  * @param {string} pluginId - The unique identifier of the plugin.
  * @param {string[]} authors - The list of authors of the plugin.
@@ -221,12 +221,16 @@ export const createPluginIdChecker = (pluginId, authors) => {
  */
 
 /**
+ * Configures the access control and sandbox blacklist for the plugin system.
+ *
  * @param {Partial<TinyPluginConstructor>} ops - The configuration options for the constructor.
  * @param {PluginAccessControl} accessControl - The access control object to be configured.
- * @param {BlackListCore} [sandboxBlacklist] - An optional blacklist for the sandbox.
+ * @param {BlackListCore|null} [sandboxBlacklist] - An optional blacklist for the sandbox.
  */
 const pluginConstrctor = (ops, accessControl, sandboxBlacklist) => {
   /**
+   * Validates that the provided blacklist values are an array of strings or symbols.
+   *
    * @param {string} key - The key to check.
    * @param {BlackListValue[]} values - The values to check.
    */
@@ -310,11 +314,11 @@ const pluginConstrctor = (ops, accessControl, sandboxBlacklist) => {
         blacklist.authors.forEach((id) => accessControl.blacklist.authors.add(id));
       }
       if (typeof blacklist.categories !== 'undefined') {
-        checkBlackList('whistlist categories', blacklist.categories);
+        checkBlackList('blacklist categories', blacklist.categories);
         blacklist.categories.forEach((id) => accessControl.blacklist.categories.add(id));
       }
       if (typeof blacklist.tags !== 'undefined') {
-        checkBlackList('whistlist tags', blacklist.tags);
+        checkBlackList('blacklist tags', blacklist.tags);
         blacklist.tags.forEach((id) => accessControl.blacklist.tags.add(id));
       }
     }
@@ -329,8 +333,9 @@ const pluginConstrctor = (ops, accessControl, sandboxBlacklist) => {
 
 /**
  * Validate asynchronous encryption signature using the native browser API.
- * @param {PluginAccessControl} accessControl
- * @param {Set<string>} verifiedPlugins
+ *
+ * @param {PluginAccessControl} accessControl - The access control configuration used for verification.
+ * @param {Set<string>} verifiedPlugins - The set of plugins that have already been verified.
  * @param {string} pluginId - The unique identifier of the plugin.
  * @param {string[]} authors - The list of authors of the plugin.
  * @param {string} signature - The cryptographic signature provided by the plugin.
@@ -385,6 +390,8 @@ export const verifyPluginSignature = async (
 };
 
 /**
+ * Determines if a plugin is allowed to access the specified scope based on the current mode.
+ *
  * @param {PluginAccessControlMode} mode - The operational mode for engine access control.
  * @param {string} pluginId - The unique identifier of the plugin.
  * @param {readonly string[]} authors - The list of authors of the plugin.
@@ -392,8 +399,8 @@ export const verifyPluginSignature = async (
  * @param {readonly string[]} tags - The list of tags of the plugin.
  * @param {BwList|BwListProtected} whitelist - The whitelist configuration.
  * @param {BwList|BwListProtected} blacklist - The blacklist configuration.
- * @param {Set<string>} verifiedPlugins
- * @returns {boolean}
+ * @param {Set<string>} verifiedPlugins - The set of plugins that have already been verified.
+ * @returns {boolean} True if the plugin is allowed, false otherwise.
  */
 const isAllowedPlugin = (
   mode,
@@ -434,6 +441,8 @@ const isAllowedPlugin = (
 };
 
 /**
+ * Creates a default access control object.
+ *
  * @returns {PluginAccessControl} A new access control object with default settings.
  */
 const createAccessControl = () => ({
@@ -447,7 +456,9 @@ const createAccessControl = () => ({
 });
 
 /**
- * @template {TinyPlugin<any, TinyPluginLayer, string, string, any[]>|TinyPluginLayer} InstanceObj - The type of the object to be proxied.
+ * Creates a sandboxed proxy to restrict access to the provided instance.
+ *
+ * @template {TinyPlugin<any, TinyPluginLayer, string, string, any[]>|TinyPluginLayer} InstanceObj - The object to be proxied.
  * @param {InstanceObj} instance - The object to be proxied.
  * @param {BlackListCoreProtected|null} engineSandboxBlacklist - The blacklist from the engine sandbox.
  * @param {BlackListCore|null} sandboxBlacklist - The blacklist for the plugin sandbox.
@@ -575,7 +586,7 @@ class TinyPluginLayer extends TinyDebugger {
 
   /**
    * Initializes a new instance of the TinyPluginLayer class.
-   * @param {TinyPluginConstructor} [ops] - The configuration options for the layer.
+   * @param {TinyPluginConstructor} [ops] - The configuration options for the constructor.
    */
   constructor(ops) {
     super(
@@ -594,7 +605,7 @@ class TinyPluginLayer extends TinyDebugger {
    * @template {any[]} Args - The type of arguments passed to the callback.
    * @param {(...args: Args) => void} [callback] - An optional callback function to execute during initialization.
    * @param {Args} args - The arguments to be passed to the callback.
-   * @returns {this} - The current instance of TinyPluginLayer.
+   * @returns {this} The current instance of the TinyPluginLayer.
    * @throws {Error} If the layer has already been initialized.
    */
   _startLayer(callback, ...args) {
@@ -633,7 +644,7 @@ class TinyPluginLayer extends TinyDebugger {
    * @param {string} pluginId - The unique identifier.
    * @param {string[]} authors - The authors list.
    * @param {string} signature - The cryptographic signature.
-   * @returns {Promise<boolean>}
+   * @returns {Promise<boolean>} A promise that resolves to true if the signature is valid, false otherwise.
    */
   async verifyPluginSignature(pluginId, authors, signature) {
     return verifyPluginSignature(
@@ -646,7 +657,7 @@ class TinyPluginLayer extends TinyDebugger {
   }
 
   /**
-   * Creates a sandboxed proxy for the layer to prevent unauthorized access.
+   * Creates a secure proxy to restrict plugin access to the host.
    * This ensures that even if the layer is passed to external entities,
    * its internal state and lifecycle methods remain protected.
    * @returns {this} The proxied instance of the layer.
@@ -801,7 +812,7 @@ class TinyPluginCore extends TinyDebugger {
 
   /**
    * Gets the total number of registered plugins in the engine.
-   * @returns {number} The number of plugins.
+   * @returns {number} The total number of registered plugins in the engine.
    */
   get pluginsSize() {
     return this.#plugins.size;
@@ -876,7 +887,7 @@ class TinyPluginCore extends TinyDebugger {
    * Validate asynchronous encryption signature using the native browser API.
    * @param {string} pluginId - The unique identifier of the plugin.
    * @param {string[]} authors - The list of authors of the plugin.
-   * @param {string} signature - The cryptographic signature provided by the plugin.
+   * @param {string} signature - The cryptographic signature.
    * @returns {Promise<boolean>} A promise that resolves to true if the signature is valid, false otherwise.
    */
   async verifyPluginSignature(pluginId, authors, signature) {
@@ -893,6 +904,8 @@ class TinyPluginCore extends TinyDebugger {
    * Registers a plugin instance into the engine's internal plugin registry.
    *
    * @param {TinyPlugin<this, TinyPluginLayer, string, string, any[]>} plugin - The plugin instance to be registered.
+   * @throws {TypeError} If the provided plugin is not an instance of TinyPlugin.
+   * @throws {Error} If the plugin is denied access to the core based on current access control rules.
    */
   _addPlugin(plugin) {
     if (!(plugin instanceof TinyPlugin))
@@ -907,6 +920,7 @@ class TinyPluginCore extends TinyDebugger {
 
   /**
    * Installs a new plugin into the engine and starts its lifecycle.
+   *
    * @template {TinyPluginLayer} Layer - The type of the plugin layer.
    * @template {string} Id - The type of the plugin ID.
    * @template {string} Version - The type of the plugin version.
@@ -943,7 +957,7 @@ class TinyPluginCore extends TinyDebugger {
    * This method checks the target plugin's identity against the engine's
    * access control rules (whitelist/blacklist/cryptographic).
    *
-   * @template {any} ExternalPlugin
+   * @template {any} ExternalPlugin - The external plugin trying to get the target plugin.
    * @param {string} targetId - The unique identifier of the target plugin.
    * @param {ExternalPlugin} externalPlugin - The external plugin trying to get the target plugin.
    * @returns {TinyPlugin<this, TinyPluginLayer, string, string, any[]>|undefined} The plugin instance if access is granted, otherwise undefined.
@@ -1001,7 +1015,7 @@ class TinyPluginCore extends TinyDebugger {
 /**
  * Represents a plugin instance designed to be integrated into a main engine.
  * It encapsulates the plugin's identity (id and version), its connection to the engine,
- * the installation logic, and any associated configuration options.
+ * its installation logic, and any associated configuration options.
  *
  * @template {TinyPluginCore} Engine - The type of the engine.
  * @template {TinyPluginLayer} Layer - The type of the plugin layer.
@@ -1124,7 +1138,7 @@ class TinyPlugin extends TinyDebugger {
 
   /**
    * Gets the total number of plugins in the engine.
-   * @returns {number} The number of plugins.
+   * @returns {number} The total number of plugins in the engine.
    */
   get pluginsSize() {
     checkDestroy(this.#isDestroyed);
@@ -1143,7 +1157,7 @@ class TinyPlugin extends TinyDebugger {
 
   /**
    * Checks if the specified plugin or ID is registered in the engine.
-   * @param {TinyPlugin<Engine, TinyPluginLayer, string, string, any[]>|string} plugin - The plugin instance to check.
+   * @param {TinyPlugin<Engine, TinyPluginLayer, string, string, any[]>|string} plugin - The plugin instance or ID to check.
    * @returns {boolean} True if the plugin is registered, false otherwise.
    */
   hasPlugin(plugin) {
@@ -1211,6 +1225,7 @@ class TinyPlugin extends TinyDebugger {
   /**
    * Gets the list of authors for the plugin.
    * @returns {readonly string[]} The plugin authors.
+   * @throws {Error} If the plugin authors are not set.
    */
   get authors() {
     checkDestroy(this.#isDestroyed);
@@ -1237,8 +1252,9 @@ class TinyPlugin extends TinyDebugger {
   }
 
   /**
-   * Gets the list of contributors for the plugin.
+   * Gets the list of contributors to the plugin.
    * @returns {readonly string[]} The plugin contributors.
+   * @throws {Error} If the plugin contributors are not set.
    */
   get contributors() {
     checkDestroy(this.#isDestroyed);
@@ -1267,16 +1283,17 @@ class TinyPlugin extends TinyDebugger {
   /**
    * Gets the categories of the plugin.
    * @returns {readonly string[]} The plugin categories.
+   * @throws {Error} If the plugin categories are not set.
    */
   get categories() {
     checkDestroy(this.#isDestroyed);
-    if (this.#categories.size === 0) throw new Error('Plugin categories is not set.');
+    if (this.#categories.size === 0) throw new Error('Plugin categories are not set.');
     return Object.freeze([...this.#categories]);
   }
 
   /**
-   * Sets the categories of the plugin.
-   * @param {string[]} value - The new list of categories.
+   * Sets the categories for the plugin.
+   * @param {string[]} value - The new list of the plugin categories.
    * @throws {Error} If the categories are already set.
    * @throws {TypeError} If the value is not an array of non-empty strings or is empty.
    */
@@ -1295,16 +1312,17 @@ class TinyPlugin extends TinyDebugger {
   /**
    * Gets the tags of the plugin.
    * @returns {readonly string[]} The plugin tags.
+   * @throws {Error} If the plugin tags are not set.
    */
   get tags() {
     checkDestroy(this.#isDestroyed);
-    if (this.#tags.size === 0) throw new Error('Plugin tags is not set.');
+    if (this.#tags.size === 0) throw new Error('Plugin tags are not set.');
     return Object.freeze([...this.#tags]);
   }
 
   /**
-   * Sets the tags of the plugin.
-   * @param {string[]} value - The new list of tags.
+   * Sets the tags for the plugin.
+   * @param {string[]} value - The new list of the plugin tags.
    * @throws {Error} If the tags are already set.
    * @throws {TypeError} If the value is not an array of non-empty strings or is empty.
    */
@@ -1323,6 +1341,7 @@ class TinyPlugin extends TinyDebugger {
   /**
    * Gets the version of the plugin as a string.
    * @returns {VersionString} The plugin version.
+   * @throws {Error} If the plugin version is not set.
    */
   get version() {
     checkDestroy(this.#isDestroyed);
@@ -1347,6 +1366,7 @@ class TinyPlugin extends TinyDebugger {
   /**
    * Retrieves the current version of the plugin as a TinyVersion instance.
    * @returns {TinyVersion<VersionString>} The TinyVersion instance representing the plugin's version.
+   * @throws {Error} If the plugin version is not set.
    */
   get tinyVersion() {
     checkDestroy(this.#isDestroyed);
@@ -1407,7 +1427,7 @@ class TinyPlugin extends TinyDebugger {
 
   /**
    * Gets the configuration options of the plugin.
-   * @returns {Options} The plugin configuration options.
+   * @returns {Options} The configuration options of the plugin.
    */
   get options() {
     checkDestroy(this.#isDestroyed);
@@ -1417,7 +1437,7 @@ class TinyPlugin extends TinyDebugger {
   /**
    * Gets the blacklist of restricted keys from the engine.
    * This is accessible within the plugin's sandbox for inspection.
-   * @returns {BlackListCoreProtected} The blacklist.
+   * @returns {BlackListCoreProtected} The blacklist from the engine.
    */
   get engineBlacklist() {
     checkDestroy(this.#isDestroyed);
