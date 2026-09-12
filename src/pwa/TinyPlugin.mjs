@@ -1095,19 +1095,6 @@ class TinyPlugin extends TinyDebugger {
   get layer() {
     checkDestroy(this.#isDestroyed);
     if (this.#layer === null) throw new Error('Plugin layer is not set.');
-    // Identity-based security check
-    if (
-      !this.#layer.canAccessLayer(
-        this.#id,
-        [...this.#authors],
-        [...this.#categories],
-        [...this.#tags],
-      )
-    ) {
-      throw new Error(
-        `Security Error: Access to the layer is denied for plugin "${this.id}" based on current access control rules.`,
-      );
-    }
     return this.#layer._createSandbox();
   }
 
