@@ -1515,6 +1515,7 @@ class TinyPlugin extends TinyDebugger {
   destroy() {
     if (this.#isDestroyed) return;
     this.emit('destroyed');
+    this.#layer?.emit('destroyed');
     this.#isDestroyed = true;
   }
 }
