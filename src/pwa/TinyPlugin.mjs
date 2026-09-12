@@ -943,7 +943,7 @@ class TinyPluginCore extends TinyDebugger {
    * This method checks the target plugin's identity against the engine's
    * access control rules (whitelist/blacklist/cryptographic).
    *
-   * @template {TinyPlugin<this, TinyPluginLayer, string, string, any[]>} ExternalPlugin
+   * @template {any} ExternalPlugin
    * @param {string} targetId - The unique identifier of the target plugin.
    * @param {ExternalPlugin} externalPlugin - The external plugin trying to get the target plugin.
    * @returns {TinyPlugin<this, TinyPluginLayer, string, string, any[]>|undefined} The plugin instance if access is granted, otherwise undefined.
