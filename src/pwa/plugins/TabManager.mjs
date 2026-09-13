@@ -1,5 +1,5 @@
 import { TinyPluginLayer } from 'tiny-essentials/libs/plugin/TinyPlugin';
-import TinyServiceWorkerEngine from '../TinyServiceWorkerEngine.mjs';
+import TinyServiceWorkerEngine from 'tiny-essentials/libs/router/pwa/TinyServiceWorkerEngine';
 
 /**
  * Represents information about a single browser tab.
@@ -108,7 +108,7 @@ class TinySwTabsLayer extends TinyPluginLayer {
 
 /**
  * A plugin for TinyServiceWorkerEngine that manages a centralized registry of all open website tabs.
- * @type {import('../TinyServiceWorkerEngine.mjs').SwPluginInstaller<TinySwTabsLayer, 'TabManager', '1.0.0', []>}
+ * @type {import('tiny-essentials/libs/router/pwa/TinyServiceWorkerEngine').SwPluginInstaller<TinySwTabsLayer, 'TabManager', '1.0.0', []>}
  */
 const TinyTabManagerPlugin = (instance) => {
   const engine = instance.engine;
