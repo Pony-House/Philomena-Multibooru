@@ -90,7 +90,6 @@ class TinySwTabsLayer extends TinyPluginLayer {
    */
   constructor(lgConfig = {}) {
     super({
-      sandboxBlacklist: { get: ['getTab'] },
       logCfg: {
         id: '[_blue_TinySW-Tabs_reset_]',
         logger: lgConfig.logger ?? console,

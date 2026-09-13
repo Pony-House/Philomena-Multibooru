@@ -33,11 +33,6 @@ class TinySwTabsLayer extends TinyPluginLayer {
 
     // Detect Tab Closing (Most reliable event for closing/navigating away)
     window.addEventListener('pagehide', () => this.#reportStatus(true));
-
-    // Listen for updates from the Service Worker
-    this.#sw.on('tab:list_updated', (event) => {
-      // This is handled via the TinyServiceWorker message system
-    });
   }
 
   /**
@@ -46,16 +41,13 @@ class TinySwTabsLayer extends TinyPluginLayer {
    */
   async #reportStatus(isUnregistering = false) {
     if (isUnregistering) {
-      this.#sw.postMessage({ type: 'tab:unregister' });
+      this.#sw.emit('tab:unregister');
       return;
     }
 
-    this.#sw.postMessage({
-      type: 'tab:register', // Using register as an 'update'/'sync' mechanism
-      data: {
-        url: window.location.href,
-        title: document.title,
-      },
+    this.#sw.emit('tab:register', {
+      url: window.location.href,
+      title: document.title,
     });
   }
 
@@ -102,9 +94,15 @@ class TinySwTabsLayer extends TinyPluginLayer {
    * @param {(list: TabList) => void} callback
    */
   onUpdate(callback) {
-    this.#sw.on('tab:list_updated', (msg) => {
-      callback(msg.data);
-    });
+    this.#sw.on('tab:list_updated', callback);
+  }
+
+  /**
+   * Removes a callback from tab list change events.
+   * @param {(list: TabList) => void} callback
+   */
+  offUpdate(callback) {
+    this.#sw.off('tab:list_updated', callback);
   }
 }
 
@@ -121,14 +119,9 @@ const TinyTabManagerPlugin = (instance, lgConfig = {}) => {
   instance.contributors = ['JasminDreasond'];
   instance.categories = ['tab-manager'];
   instance.tags = ['management'];
-
-  if (!(engine instanceof TinyServiceWorker)) {
+  if (!(engine instanceof TinyServiceWorker))
     throw new TypeError('Plugin requires a TinyServiceWorker instance to function.');
-  }
-
-  const layer = new TinySwTabsLayer(engine, lgConfig);
-
-  return layer;
+  return new TinySwTabsLayer(engine, lgConfig);
 };
 
 export default TinyTabManagerPlugin;
