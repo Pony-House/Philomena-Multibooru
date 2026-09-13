@@ -416,6 +416,7 @@ class TinyServiceWorkerEngine extends TinyPluginCore {
     routerCodeCfg = this.#config.fetch.router.codes.get(c);
 
     // 2. If not found, check for dynamic default configurations
+    // @ts-ignore
     if (!routerCodeCfg) routerCodeCfg = this.#defaultCode[c].data;
 
     // 3. If still not found, fallback to the 'unknown' configuration
