@@ -1,6 +1,8 @@
 import { TinyPluginLayer } from 'tiny-essentials/libs/plugin/TinyPlugin';
 import TinyServiceWorkerEngine from 'tiny-essentials/libs/router/pwa/TinyServiceWorkerEngine';
 
+/** @typedef {import('tiny-essentials/libs/tools/TinyDebugger').DebuggerConstructor} DebuggerConstructor - The constructor function for a debugger instance. */
+
 /**
  * Represents information about a single browser tab.
  * @typedef {Object} TabInfo
@@ -84,10 +86,7 @@ class TinySwTabsLayer extends TinyPluginLayer {
 
   /**
    * Initializes a new instance of the TinySwTabsLayer, assigning it a unique key and registering it in the static instances registry.
-   * @param {Object} [lgConfig] - Configuration options for the instance.
-   * @param {boolean} [lgConfig.debugMode=false] - Whether to enable internal debug logging.
-   * @param {boolean} [lgConfig.useLogColors=false] - Whether to enable log color support.
-   * @param {Partial<Console>} [lgConfig.logger=console] - A custom logger object.
+   * @param {Partial<DebuggerConstructor>} [lgConfig] - Configuration options for the instance.
    */
   constructor(lgConfig = {}) {
     super({
