@@ -1,7 +1,7 @@
 import { isJsonObject } from 'tiny-essentials/basics/objChecker';
 import { compileGlobRegExp } from 'tiny-essentials/regexp/Glob';
 import TinyServiceWorkerEngine from '../TinyServiceWorkerEngine.mjs';
-import { TinyPluginLayer } from '../TinyPlugin.mjs';
+import { TinyPluginLayer } from 'tiny-essentials/libs/plugin/TinyPlugin';
 
 /**
  * @typedef {Object} GlobCacheOptions
