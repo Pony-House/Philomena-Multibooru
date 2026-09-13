@@ -2,7 +2,8 @@ import { useEffect } from 'react';
 import TinyDomReadyManager from 'tiny-essentials/libs/html/TinyDomReadyManager';
 import { waitForTrue } from 'tiny-essentials/basics/promiseUtils';
 import { getDbConnStatus } from '../../db/connection.js';
-import { importantTasks, swManager } from '../../tools/utils.js';
+import { importantTasks } from '../../tools/utils.js';
+import { swManager } from '../../tools/sw.mjs';
 
 const readyPage = new TinyDomReadyManager();
 readyPage.onReady(

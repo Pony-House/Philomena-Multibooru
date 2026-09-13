@@ -1,5 +1,4 @@
 import TinyPromiseQueue from 'tiny-essentials/libs/utils/TinyPromiseQueue';
-import TinyServiceWorker from 'tiny-essentials/libs/router/TinyServiceWorker';
 import { alert } from 'tiny-essentials/webTemplates/bootstrap/5.3/html/BootstrapDialogs';
 
 import { fetchProfile } from '../services/api/Profile.js';
@@ -120,14 +119,3 @@ export const updateEmbedMetadata = ({ title, description, image, url }) => {
   setMetaTag('og:url', url);
   setMetaTag('twitter:url', url);
 };
-
-// Single instance to manage Service Worker
-export const swManager = new TinyServiceWorker({
-  id: 'web-manager',
-  swUrl: '/sw.js',
-  version: '1.1.3',
-  debugMode: import.meta.env.DEV,
-  useLogColors: true,
-});
-
-if (import.meta.env.DEV) window.swManager = swManager;
