@@ -114,7 +114,7 @@ const TinyTabManagerPlugin = (instance) => {
   const engine = instance.engine;
   instance.id = 'TabManager';
   instance.version = '1.0.0';
-  instance.description = 'Advanced tag manager.';
+  instance.description = 'Advanced tab manager.';
   instance.authors = ['JasminDreasond'];
   instance.contributors = ['JasminDreasond'];
   instance.categories = ['tab-manager'];
