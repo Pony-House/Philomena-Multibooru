@@ -4,11 +4,15 @@ import TinyServiceWorker from 'tiny-essentials/libs/router/TinyServiceWorker';
 /** @typedef {import('tiny-essentials/libs/tools/TinyDebugger').DebuggerConstructor} DebuggerConstructor - The constructor function for a debugger instance. */
 
 class TinySwTabsLayer extends TinyPluginLayer {
+  /** @type {TinyServiceWorker} */
+  #engine;
+
   /**
    * Initializes a new instance of the TinySwTabsLayer, assigning it a unique key and registering it in the static instances registry.
+   * @param {TinyServiceWorker} engine
    * @param {Partial<DebuggerConstructor>} [lgConfig] - Configuration options for the instance.
    */
-  constructor(lgConfig = {}) {
+  constructor(engine, lgConfig = {}) {
     super({
       sandboxBlacklist: { get: ['getTab'] },
       logCfg: {
@@ -18,14 +22,15 @@ class TinySwTabsLayer extends TinyPluginLayer {
         useLogColors: lgConfig.useLogColors ?? false,
       },
     });
+    this.#engine = engine;
   }
 }
 
 /**
  * A plugin for TinyServiceWorker that manages a centralized registry of all open website tabs.
- * @type {import('tiny-essentials/libs/router/TinyServiceWorker').SwPluginInstaller<TinySwTabsLayer, 'TabManager', '1.0.0', []>}
+ * @type {import('tiny-essentials/libs/router/TinyServiceWorker').SwPluginInstaller<TinySwTabsLayer, 'TabManager', '1.0.0', [Partial<DebuggerConstructor>]>}
  */
-const TinyTabManagerPlugin = (instance) => {
+const TinyTabManagerPlugin = (instance, lgConfig = {}) => {
   const engine = instance.engine;
   instance.id = 'TabManager';
   instance.version = '1.0.0';
@@ -39,7 +44,7 @@ const TinyTabManagerPlugin = (instance) => {
     throw new TypeError('Plugin requires a TinyServiceWorker instance to function.');
   }
 
-  const layer = new TinySwTabsLayer(engine);
+  const layer = new TinySwTabsLayer(engine, lgConfig);
 
   return layer;
 };

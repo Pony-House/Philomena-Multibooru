@@ -107,9 +107,9 @@ class TinySwTabsLayer extends TinyPluginLayer {
 
 /**
  * A plugin for TinyServiceWorkerEngine that manages a centralized registry of all open website tabs.
- * @type {import('tiny-essentials/libs/router/pwa/TinyServiceWorkerEngine').SwPluginInstaller<TinySwTabsLayer, 'TabManager', '1.0.0', []>}
+ * @type {import('tiny-essentials/libs/router/pwa/TinyServiceWorkerEngine').SwPluginInstaller<TinySwTabsLayer, 'TabManager', '1.0.0', [Partial<DebuggerConstructor>]>}
  */
-const TinyTabManagerPlugin = (instance) => {
+const TinyTabManagerPlugin = (instance, lgConfig = {}) => {
   const engine = instance.engine;
   instance.id = 'TabManager';
   instance.version = '1.0.0';
@@ -123,7 +123,7 @@ const TinyTabManagerPlugin = (instance) => {
     throw new TypeError('Plugin requires a TinyServiceWorkerEngine instance to function.');
   }
 
-  const layer = new TinySwTabsLayer();
+  const layer = new TinySwTabsLayer(lgConfig);
   layer._start((tabs) => {
     /**
      * Broadcasts the current list of tabs to all connected clients.
