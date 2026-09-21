@@ -1,5 +1,7 @@
+import TinyPromiseQueue from 'tiny-essentials/libs/utils/TinyPromiseQueue';
 import { TinyPluginLayer } from 'tiny-essentials/libs/plugin/TinyPlugin';
 import TinyServiceWorkerEngine from 'tiny-essentials/libs/router/pwa/TinyServiceWorkerEngine';
+import { sw } from '../config.mjs';
 
 /** @typedef {import('tiny-essentials/libs/tools/TinyDebugger').DebuggerConstructor} DebuggerConstructor - The constructor function for a debugger instance. */
 
@@ -20,6 +22,11 @@ import TinyServiceWorkerEngine from 'tiny-essentials/libs/router/pwa/TinyService
  * A layer within the TinyPlugin system specifically designed to manage and track tab instances.
  */
 class TinySwTabsLayer extends TinyPluginLayer {
+  #queue = new TinyPromiseQueue();
+  get queue() {
+    return this.#queue;
+  }
+
   /**
    * A static registry that stores all active tab instances indexed by a unique key.
    * @type {Map<number, TabInstance>}
@@ -41,6 +48,83 @@ class TinySwTabsLayer extends TinyPluginLayer {
    * @type {TabInstance}
    */
   #tabs = new Map();
+
+  /**
+   * A promise that resolves to the IndexedDB database instance.
+   * @type {Promise<IDBDatabase> | undefined}
+   */
+  #dbPromise;
+
+  /**
+   * Initializes the database connection for persistence.
+   * @returns {Promise<IDBDatabase>}
+   */
+  async #getDB() {
+    if (this.#dbPromise) return this.#dbPromise;
+
+    this.#dbPromise = new Promise((resolve, reject) => {
+      const request = indexedDB.open('TinySwTabsDB', 1);
+
+      request.onupgradeneeded = () => {
+        request.result.createObjectStore('tabs');
+      };
+
+      request.onsuccess = () => resolve(request.result);
+      request.onerror = () => reject(request.error);
+    });
+
+    return this.#dbPromise;
+  }
+
+  /**
+   * Loads the tab registry from IndexedDB into the in-memory Map.
+   * @returns {Promise<void>}
+   */
+  async #loadFromStorage() {
+    const db = await this.#getDB();
+    return new Promise((resolve, reject) => {
+      const transaction = db.transaction('tabs', 'readonly');
+      const store = transaction.objectStore('tabs');
+      const request = store.getAll();
+
+      request.onsuccess = () => {
+        const data = request.result;
+        this.#tabs.clear();
+        // Data is stored as an array of TabInfo objects
+        data.forEach((tab) => {
+          this.#tabs.set(tab.id, tab);
+        });
+        resolve();
+      };
+
+      request.onerror = () => reject(request.error);
+    });
+  }
+
+  /**
+   * Synchronizes the current in-memory Map with the IndexedDB storage.
+   * @returns {Promise<void>}
+   */
+  async persist() {
+    const db = await this.#getDB();
+    return this.#queue.enqueue(
+      () =>
+        new Promise((resolve, reject) => {
+          const transaction = db.transaction('tabs', 'readwrite');
+          const store = transaction.objectStore('tabs');
+
+          // Clear existing registry to ensure deletions are reflected
+          store.clear();
+
+          for (const [id, tab] of this.#tabs.entries()) {
+            store.put(tab, id);
+          }
+
+          transaction.oncomplete = () => resolve();
+          transaction.onerror = () => reject(transaction.error);
+        }),
+    );
+  }
 
   /**
    * Retrieves a snapshot of all tabs currently managed by the instance corresponding to the provided key.
@@ -77,10 +161,11 @@ class TinySwTabsLayer extends TinyPluginLayer {
   }
 
   /**
-   * Initializes the layer and begins monitoring tab changes via a callback.
+   * Initializes the layer, loads persisted data, and begins monitoring tab changes.
    * @param {(tabs: TabInstance) => void} callback
    */
   _start(callback) {
+    this.#queue.enqueue(() => this.#loadFromStorage());
     return this._startLayer(callback, this.#tabs);
   }
 
@@ -116,7 +201,7 @@ const TinyTabManagerPlugin = (instance, lgConfig = {}) => {
   instance.authors = ['JasminDreasond'];
   instance.contributors = ['JasminDreasond'];
   instance.categories = ['tab-manager'];
-  instance.tags = ['management'];
+  instance.tags = ['management', 'consistency'];
 
   if (!(engine instanceof TinyServiceWorkerEngine)) {
     throw new TypeError('Plugin requires a TinyServiceWorkerEngine instance to function.');
@@ -141,6 +226,29 @@ const TinyTabManagerPlugin = (instance, lgConfig = {}) => {
       });
     };
 
+    /**
+     * Compares the in-memory tab registry with the actual browser clients.
+     * Removes any tabs that are no longer active in the browser.
+     * @returns {Promise<void>}
+     */
+    const reconcileTabs = async () => {
+      const activeClients = await layer.queue.enqueue(() => sw.clients.matchAll());
+      const activeIds = new Set(activeClients.map((client) => client.id));
+      let ghostFound = false;
+
+      for (const id of tabs.keys()) {
+        if (!activeIds.has(id)) {
+          tabs.delete(id);
+          ghostFound = true;
+        }
+      }
+
+      if (ghostFound) {
+        await layer.persist();
+        await broadcastUpdate();
+      }
+    };
+
     // 1. Handle Tab Registration (When a new tab opens)
     engine.onApi(
       'tab:register',
@@ -155,12 +263,16 @@ const TinyTabManagerPlugin = (instance, lgConfig = {}) => {
           );
         }
 
+        // Perform reconciliation to clean up ghosts before adding new entries
+        await reconcileTabs();
+
         tabs.set(clientId, {
           id: clientId,
           url: data.url,
           title: data.title,
         });
 
+        await layer.persist(); // Persist to IndexedDB
         await broadcastUpdate();
       },
     );
@@ -185,6 +297,7 @@ const TinyTabManagerPlugin = (instance, lgConfig = {}) => {
             url: data.url,
             title: data.title,
           });
+          await layer.persist(); // Persist to IndexedDB
           await broadcastUpdate();
         }
       },
@@ -200,8 +313,12 @@ const TinyTabManagerPlugin = (instance, lgConfig = {}) => {
 
         if (tabs.has(clientId)) {
           tabs.delete(clientId);
+          await layer.persist(); // Persist to IndexedDB
           await broadcastUpdate();
         }
+
+        // Reconcile to ensure state consistency
+        await reconcileTabs();
       },
     );
 
@@ -211,6 +328,9 @@ const TinyTabManagerPlugin = (instance, lgConfig = {}) => {
       /**
        * Listens for requests to retrieve the current list of all registered tabs.
        */ async (msg) => {
+        // Ensure we are providing the most up-to-date list possible
+        await reconcileTabs();
+
         const tabList = {
           count: tabs.size,
           tabs: Array.from(tabs.values()),
