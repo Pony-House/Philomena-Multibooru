@@ -87,6 +87,18 @@ class TinySwTabsLayer extends TinyPluginLayer {
   }
 
   /**
+   * Retrieves the information for a specific tab by its unique ID.
+   * @param {string} id - The unique identifier of the tab.
+   * @returns {Promise<TabInfo|null>} - The tab information if found, or null if the tab does not exist.
+   * @throws {TypeError} If the provided id is not a string.
+   */
+  async getTab(id) {
+    if (typeof id !== 'string')
+      throw new TypeError('[TinySwTabsLayer] getTab: id must be a string.');
+    return (await this.#sw.emitApi('tab:get_tab', { id })) ?? null;
+  }
+
+  /**
    * Sets a callback to be executed whenever the tab list changes.
    * @param {(list: TabList) => void} callback
    */
@@ -116,7 +128,7 @@ const TinyTabManagerPlugin = (instance, lgConfig = {}) => {
   instance.contributors = ['JasminDreasond'];
   instance.categories = ['tab-manager'];
   instance.tags = ['management'];
-  instance.allowedGets = ['onUpdate', 'offUpdate', 'getTabList', 'register'];
+  instance.allowedGets = ['onUpdate', 'offUpdate', 'getTabList', 'getTab', 'register'];
   if (!(engine instanceof TinyServiceWorker))
     throw new TypeError('Plugin requires a TinyServiceWorker instance to function.');
   return new TinySwTabsLayer(engine, lgConfig);

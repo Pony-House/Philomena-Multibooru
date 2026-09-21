@@ -211,6 +211,7 @@ const TinyTabManagerPlugin = (instance, lgConfig = {}) => {
   instance.contributors = ['JasminDreasond'];
   instance.categories = ['tab-manager'];
   instance.tags = ['management', 'consistency'];
+  instance.allowedGets = ['getTab'];
 
   if (!(engine instanceof TinyServiceWorkerEngine)) {
     throw new TypeError('Plugin requires a TinyServiceWorkerEngine instance to function.');
@@ -336,7 +337,7 @@ const TinyTabManagerPlugin = (instance, lgConfig = {}) => {
       'tab:get_list',
       /**
        * Listens for requests to retrieve the current list of all registered tabs.
-       */ async (msg) => {
+       */ async () => {
         // Ensure we are providing the most up-to-date list possible
         await reconcileTabs();
 
@@ -345,6 +346,26 @@ const TinyTabManagerPlugin = (instance, lgConfig = {}) => {
           count: tabs.size,
           tabs: Array.from(tabs.values()),
         };
+      },
+    );
+
+    // 5. Handle Request for a specific tab (New)
+    engine.onApi(
+      'tab:get_tab',
+      /**
+       * Processes requests to retrieve information for a specific tab by its ID.
+       * @returns {Promise<TabInfo|undefined>} - The tab information or null if not found.
+       */ async (msg) => {
+        if (!msg.data) return;
+        const { id } = msg.data;
+        if (typeof id !== 'string') {
+          throw new TypeError('[TinyTabManagerPlugin] tab:get_tab: data must contain id (string).');
+        }
+
+        const tab = tabs.get(id);
+
+        // Return a copy to prevent direct mutation of the registry
+        return tab ? { ...tab } : undefined;
       },
     );
   });
