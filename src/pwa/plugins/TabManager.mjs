@@ -22,7 +22,16 @@ import { sw } from '../config.mjs';
  * A layer within the TinyPlugin system specifically designed to manage and track tab instances.
  */
 class TinySwTabsLayer extends TinyPluginLayer {
+  /**
+   * A queue used to manage and sequence asynchronous operations to prevent race conditions.
+   * @type {TinyPromiseQueue}
+   */
   #queue = new TinyPromiseQueue();
+
+  /**
+   * Gets the internal promise queue instance.
+   * @returns {TinyPromiseQueue} - The instance of the promise queue.
+   */
   get queue() {
     return this.#queue;
   }
@@ -128,8 +137,8 @@ class TinySwTabsLayer extends TinyPluginLayer {
 
   /**
    * Retrieves a snapshot of all tabs currently managed by the instance corresponding to the provided key.
-   * @param {number} key
-   * @returns {Record<string, TabInfo>|null}
+   * @param {number} key - The unique key of the instance to retrieve tabs from.
+   * @returns {Record<string, TabInfo>|null} - An object mapping tab IDs to their information, or null if the instance is not found.
    */
   static getTabsInstance(key) {
     const instance = TinySwTabsLayer.#instances.get(key);
@@ -146,8 +155,8 @@ class TinySwTabsLayer extends TinyPluginLayer {
 
   /**
    * Retrieves the information for a specific tab by its unique ID.
-   * @param {string} id
-   * @returns {TabInfo|null}
+   * @param {string} id - The unique identifier of the tab.
+   * @returns {TabInfo|null} - The tab information if found, or null if the tab does not exist.
    * @throws {ReferenceError} If the internal layer instance cannot be found in the registry.
    */
   getTab(id) {
@@ -162,7 +171,7 @@ class TinySwTabsLayer extends TinyPluginLayer {
 
   /**
    * Initializes the layer, loads persisted data, and begins monitoring tab changes.
-   * @param {(tabs: TabInstance) => void} callback
+   * @param {(tabs: TabInstance) => void} callback - The callback function to be executed with the current tabs upon initialization.
    */
   _start(callback) {
     this.#queue.enqueue(() => this.#loadFromStorage());
@@ -191,7 +200,7 @@ class TinySwTabsLayer extends TinyPluginLayer {
 
 /**
  * A plugin for TinyServiceWorkerEngine that manages a centralized registry of all open website tabs.
- * @type {import('tiny-essentials/libs/router/pwa/TinyServiceWorkerEngine').SwPluginInstaller<TinySwTabsLayer, 'TabManager', '1.0.0', [Partial<DebuggerConstructor>]|[]>}
+ * @type {import('tiny-essentials/libs/router/pwa/TinyServiceWorkerEngine').SwPluginInstaller<TinySwTabsLayer, 'TabManager', '1.0.0', [Partial<DebuggerConstructor>]|[]>} - The plugin installer for the Tab Manager.
  */
 const TinyTabManagerPlugin = (instance, lgConfig = {}) => {
   const engine = instance.engine;
