@@ -38,14 +38,15 @@ class TinySwTabsLayer extends TinyPluginLayer {
   /**
    * Reports the current status of this tab to the Service Worker.
    * @param {boolean} isUnregistering - If true, tells the SW this tab is closing.
+   * @returns {Promise<void>}
    */
   async #reportStatus(isUnregistering = false) {
+    await this.#sw.waitForReady();
     if (isUnregistering) {
-      this.#sw.emit('tab:unregister');
-      return;
+      return this.#sw.emitApi('tab:unregister');
     }
 
-    this.#sw.emit('tab:register', {
+    return this.#sw.emitApi('tab:register', {
       url: window.location.href,
       title: document.title,
     });
@@ -58,7 +59,6 @@ class TinySwTabsLayer extends TinyPluginLayer {
    */
   constructor(sw, lgConfig = {}) {
     super({
-      sandboxBlacklist: { get: ['getTab'] },
       logCfg: {
         id: '[_blue_TinySW-Tabs_reset_]',
         logger: lgConfig.logger ?? console,
@@ -68,9 +68,11 @@ class TinySwTabsLayer extends TinyPluginLayer {
     });
     this.#sw = sw;
     this.#initListeners();
+    this.#sw.waitForReady().then(() => this.register());
   }
   /**
    * Registers this tab in the manager.
+   * @returns {Promise<void>}
    */
   async register() {
     this.#reportStatus();
@@ -119,6 +121,7 @@ const TinyTabManagerPlugin = (instance, lgConfig = {}) => {
   instance.contributors = ['JasminDreasond'];
   instance.categories = ['tab-manager'];
   instance.tags = ['management'];
+  instance.allowedGets = ['onUpdate', 'offUpdate', 'getTabList', 'register'];
   if (!(engine instanceof TinyServiceWorker))
     throw new TypeError('Plugin requires a TinyServiceWorker instance to function.');
   return new TinySwTabsLayer(engine, lgConfig);

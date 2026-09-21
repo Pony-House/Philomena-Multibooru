@@ -142,7 +142,7 @@ const TinyTabManagerPlugin = (instance, lgConfig = {}) => {
     };
 
     // 1. Handle Tab Registration (When a new tab opens)
-    engine.addMessageListener(
+    engine.onApi(
       'tab:register',
       /**
        * Processes registration messages to add new tabs to the registry.
@@ -191,7 +191,7 @@ const TinyTabManagerPlugin = (instance, lgConfig = {}) => {
     );
 
     // 3. Handle Tab Unregistration (When a tab is closed)
-    engine.addMessageListener(
+    engine.onApi(
       'tab:unregister',
       /**
        * Processes unregistration messages to remove tabs from the registry.
