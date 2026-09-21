@@ -83,12 +83,7 @@ class TinySwTabsLayer extends TinyPluginLayer {
    * @returns {Promise<TabList>}
    */
   async getTabList() {
-    return new Promise((resolve) => {
-      this.#sw.on('tab:list_response', (msg) => {
-        resolve(msg.data);
-      });
-      this.#sw.emit('tab:get_list');
-    });
+    return this.#sw.emitApi('tab:get_list');
   }
 
   /**

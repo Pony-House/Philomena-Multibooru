@@ -323,7 +323,7 @@ const TinyTabManagerPlugin = (instance, lgConfig = {}) => {
     );
 
     // 4. Handle Request for current list (Manual polling)
-    engine.addMessageListener(
+    engine.onApi(
       'tab:get_list',
       /**
        * Listens for requests to retrieve the current list of all registered tabs.
@@ -331,13 +331,11 @@ const TinyTabManagerPlugin = (instance, lgConfig = {}) => {
         // Ensure we are providing the most up-to-date list possible
         await reconcileTabs();
 
-        const tabList = {
+        // Reply directly to the source of the request
+        return {
           count: tabs.size,
           tabs: Array.from(tabs.values()),
         };
-
-        // Reply directly to the source of the request
-        msg.reply('tab:list_response', tabList);
       },
     );
   });
