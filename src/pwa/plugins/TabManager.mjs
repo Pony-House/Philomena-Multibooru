@@ -12,6 +12,7 @@ import { sw } from '../config.mjs';
  * @property {string} url - The current URL of the tab.
  * @property {string} title - The document title of the tab.
  * @property {boolean} isFocused - Whether the tab currently has window focus.
+ * @property {any} [data] - Custom data provided by the client.
  */
 
 /**
@@ -298,6 +299,7 @@ const TinyTabManagerPlugin = (instance, lgConfig = {}) => {
           url: data.url,
           title: data.title,
           isFocused: data.isFocused,
+          data: data.data ?? null, // Capturing the custom cache data
         });
 
         await layer.persist(); // Persist to IndexedDB

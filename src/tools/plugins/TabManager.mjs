@@ -4,10 +4,15 @@ import TinyServiceWorker from 'tiny-essentials/libs/router/TinyServiceWorker';
 /** @typedef {import('tiny-essentials/libs/tools/TinyDebugger').DebuggerConstructor} DebuggerConstructor - The constructor function for a debugger instance. */
 
 /**
+ * @typedef {(() => any)} ExtraDataFn
+ */
+
+/**
  * Options of the new instance.
  * @typedef {Object} ConstructorOptions - Configuration options.
  * @property {boolean} [trackFocus=true] - Whether to track tab focus status.
  * @property {boolean} [allowTabClosing=true] - Whether the tab allows the SW to request tab closure.
+ * @property {ExtraDataFn} [getExtraData] - Optional function that returns custom data to be cached in the SW.
  * @property {Partial<DebuggerConstructor>} [lgConfig] - Debugger configuration.
  */
 
@@ -22,6 +27,7 @@ import TinyServiceWorker from 'tiny-essentials/libs/router/TinyServiceWorker';
  * @property {string} url - The current URL.
  * @property {string} title - The document title.
  * @property {boolean} isFocused - Whether the tab currently has window focus.
+ * @property {any} [data] - Custom data provided by the client.
  */
 
 /**
@@ -40,6 +46,8 @@ class TinySwTabsLayer extends TinyPluginLayer {
   #trackFocus;
   /** @type {boolean} - Indicates whether the tab allows closure requests from the SW. */
   #allowTabClosing;
+  /** @type {ExtraDataFn|null} - The function used to retrieve custom data for the tab. */
+  #extraDataFn;
 
   /**
    * Gets the current status of the focus tracking configuration.
@@ -110,6 +118,7 @@ class TinySwTabsLayer extends TinyPluginLayer {
       url: window.location.href,
       title: document.title,
       isFocused: this.#trackFocus ? this.#getIsTabActive() : false,
+      data: typeof this.#extraDataFn === 'function' ? await this.#extraDataFn() : undefined,
       permissions: {
         allowFocusTracking: this.#trackFocus,
         allowTabClosing: this.#allowTabClosing,
@@ -136,7 +145,7 @@ class TinySwTabsLayer extends TinyPluginLayer {
    * @param {ConstructorOptions} [options] - Configuration options.
    * @throws {TypeError} If the provided sw is not an instance of TinyServiceWorker.
    */
-  constructor(sw, { lgConfig = {}, trackFocus = true, allowTabClosing = true } = {}) {
+  constructor(sw, { lgConfig = {}, trackFocus = true, allowTabClosing = true, getExtraData } = {}) {
     super({
       logCfg: {
         id: '[_blue_TinySW-Tabs_reset_]',
@@ -155,6 +164,7 @@ class TinySwTabsLayer extends TinyPluginLayer {
     this.#sw = sw;
     this.#trackFocus = trackFocus;
     this.#allowTabClosing = allowTabClosing;
+    this.#extraDataFn = getExtraData ?? null;
 
     sw.onApi('tab:close', async () => {
       if (!this.#allowTabClosing) {
