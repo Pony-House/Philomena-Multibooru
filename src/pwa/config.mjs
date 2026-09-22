@@ -1,13 +1,13 @@
-import TinyServiceWorkerEngine from 'tiny-essentials/libs/router/pwa/TinyServiceWorkerEngine';
-import RegisterGlobCachePlugin from 'tiny-essentials/libs/router/pwa/plugins/GlobCachePlugin';
-import ViteFileDetectorPlugin from 'tiny-essentials/libs/router/pwa/plugins/ViteFileDetector';
-import TinyTabManagerPlugin from 'tiny-essentials/libs/router/pwa/plugins/TabManager';
+import TinyServiceWorkerEngine from 'tiny-essentials/libs/sw/service/TinyServiceWorkerEngine';
+import RegisterGlobCachePlugin from 'tiny-essentials/libs/sw/service/plugins/GlobCachePlugin';
+import ViteFileDetectorPlugin from 'tiny-essentials/libs/sw/service/plugins/ViteFileDetector';
+import TinyTabManagerPlugin from 'tiny-essentials/libs/sw/service/plugins/TabManager';
 
 /** @type {ServiceWorkerGlobalScope} */
 // @ts-ignore
 export const sw = self;
 
-/** @type {Partial<import('tiny-essentials/libs/router/pwa/TinyServiceWorkerEngine').PartialServiceWorkerSettings>} */
+/** @type {Partial<import('tiny-essentials/libs/sw/service/TinyServiceWorkerEngine').PartialServiceWorkerSettings>} */
 const MY_CONFIG = { fetch: { router: { enabled: true } } };
 export const tinySw = new TinyServiceWorkerEngine(MY_CONFIG, {
   debugMode: import.meta.env.DEV,
