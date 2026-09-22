@@ -44,7 +44,7 @@ export default defineConfig({
       injectRegister: false,
       manifest: manifest,
       manifestPath: '/manifest.json',
-      srcDir: 'src/pwa',
+      srcDir: 'src/sw/service',
       filename: 'sw.js',
     }),
   ],

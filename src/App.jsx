@@ -35,7 +35,7 @@ import { SearchControls } from './components/search/SearchControls.jsx';
 import { geString, parseQueryResults } from './queries/globalTags.js';
 import { WatchedImages } from './components/home/WatchedImages.jsx';
 import { updateEmbedMetadata } from './tools/utils.js';
-import { swManager } from './tools/sw.mjs';
+import { swManager } from './sw/browser/sw.mjs';
 
 /** @typedef {import('./services/api/Images.jsx').ImageResult} ImageResult */
 /** @typedef {import('./services/api/Images.jsx').ImageObj} ImageObj */

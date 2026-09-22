@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { searchImagesApi } from '../../services/api/Images.js';
 import { geString, parseQueryResults } from '../../queries/globalTags.js';
-import { swManager } from '../../tools/sw.mjs';
+import { swManager } from '../../sw/browser/sw.mjs';
 
 /**
  * @param {{ accounts: import('../../services/api/System.js').Account[], visibleBoorus: string[], onClose: () => void, onGoHome: () => void }} props
