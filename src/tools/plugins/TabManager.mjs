@@ -4,7 +4,7 @@ import TinyServiceWorker from 'tiny-essentials/libs/router/TinyServiceWorker';
 /** @typedef {import('tiny-essentials/libs/tools/TinyDebugger').DebuggerConstructor} DebuggerConstructor - The constructor function for a debugger instance. */
 
 /**
- * @typedef {(() => any)} ExtraDataFn
+ * @typedef {(() => any)} ExtraDataFn - A function that returns custom data.
  */
 
 /**
@@ -59,7 +59,7 @@ class TinySwTabsLayer extends TinyPluginLayer {
 
   /**
    * Gets whether the tab allows closure requests from the Service Worker.
-   * @returns {boolean}
+   * @returns {boolean} - Whether the tab allows closure requests.
    */
   get allowTabClosing() {
     return this.#allowTabClosing;
@@ -67,7 +67,7 @@ class TinySwTabsLayer extends TinyPluginLayer {
 
   /**
    * Determines if the tab is truly active (visible and focused).
-   * @returns {boolean}
+   * @returns {boolean} - True if the tab is visible and has focus.
    */
   #getIsTabActive() {
     const isHidden =
@@ -106,7 +106,7 @@ class TinySwTabsLayer extends TinyPluginLayer {
   /**
    * Reports the current status and permissions of this tab to the Service Worker.
    * @param {boolean} isUnregistering - If true, tells the SW this tab is closing.
-   * @returns {Promise<void>}
+   * @returns {Promise<void>} - A promise that resolves when the status report is complete.
    */
   async #reportStatus(isUnregistering = false) {
     await this.#sw.waitForReady();
@@ -180,7 +180,7 @@ class TinySwTabsLayer extends TinyPluginLayer {
 
   /**
    * Registers this tab in the manager.
-   * @returns {Promise<void>}
+   * @returns {Promise<void>} - A promise that resolves when the registration is complete.
    */
   async register() {
     this.#reportStatus();
@@ -188,7 +188,7 @@ class TinySwTabsLayer extends TinyPluginLayer {
 
   /**
    * Explicitly requests the current list of all open tabs.
-   * @returns {Promise<TabList>}
+   * @returns {Promise<TabList>} - A promise that resolves with the current list of tabs.
    */
   async getTabList() {
     return this.#sw.emitApi('tab:get_list');
@@ -209,7 +209,7 @@ class TinySwTabsLayer extends TinyPluginLayer {
   /**
    * Closes a specific tab by its ID.
    * @param {string} id - The ID of the tab to close.
-   * @returns {Promise<{ closed: boolean }>}
+   * @returns {Promise<{ closed: boolean }>} - A promise that resolves with the result of the close request.
    */
   closeTab(id) {
     if (typeof id !== 'string')
@@ -230,7 +230,7 @@ class TinySwTabsLayer extends TinyPluginLayer {
 
   /**
    * Closes all registered tabs.
-   * @returns {Promise<void>}
+   * @returns {Promise<void>} - A promise that resolves when all tabs have been requested to close.
    */
   closeAllTabs() {
     return this.#sw.emitApi('tab:close_all');
@@ -238,7 +238,7 @@ class TinySwTabsLayer extends TinyPluginLayer {
 
   /**
    * Sets a callback to be executed whenever the tab list changes.
-   * @param {(list: TabList) => void} callback
+   * @param {(list: TabList) => void} callback - The function to execute when the tab list changes.
    */
   onUpdate(callback) {
     this.#sw.on('tab:list_updated', callback);
@@ -246,7 +246,7 @@ class TinySwTabsLayer extends TinyPluginLayer {
 
   /**
    * Removes a callback from tab list change events.
-   * @param {(list: TabList) => void} callback
+   * @param {(list: TabList) => void} callback - The callback function to remove.
    */
   offUpdate(callback) {
     this.#sw.off('tab:list_updated', callback);
