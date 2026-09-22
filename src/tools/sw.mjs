@@ -1,5 +1,5 @@
 import TinyServiceWorker from 'tiny-essentials/libs/router/TinyServiceWorker';
-import TinyTabManagerPlugin from './plugins/TabManager.mjs';
+import TinyTabManagerPlugin from 'tiny-essentials/libs/router/plugins/sw/TabManager';
 
 // Single instance to manage Service Worker
 export const swManager = new TinyServiceWorker({

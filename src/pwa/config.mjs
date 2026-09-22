@@ -1,7 +1,7 @@
 import TinyServiceWorkerEngine from 'tiny-essentials/libs/router/pwa/TinyServiceWorkerEngine';
 import RegisterGlobCachePlugin from 'tiny-essentials/libs/router/pwa/plugins/GlobCachePlugin';
 import ViteFileDetectorPlugin from 'tiny-essentials/libs/router/pwa/plugins/ViteFileDetector';
-import TinyTabManagerPlugin from './plugins/TabManager.mjs';
+import TinyTabManagerPlugin from 'tiny-essentials/libs/router/pwa/plugins/TabManager';
 
 /** @type {ServiceWorkerGlobalScope} */
 // @ts-ignore
