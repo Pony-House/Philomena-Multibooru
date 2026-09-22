@@ -1,5 +1,4 @@
 import TinyServiceWorker from 'tiny-essentials/libs/sw/browser/TinyServiceWorker';
-import TinyTabManagerPlugin from 'tiny-essentials/libs/sw/browser/plugins/TabManager';
 
 // Single instance to manage Service Worker
 export const swManager = new TinyServiceWorker({
@@ -9,7 +8,5 @@ export const swManager = new TinyServiceWorker({
   debugMode: import.meta.env.DEV,
   useLogColors: true,
 });
-
-swManager.installPlugin(TinyTabManagerPlugin);
 
 if (import.meta.env.DEV) window.swManager = swManager;

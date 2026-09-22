@@ -1,7 +1,6 @@
 import TinyServiceWorkerEngine from 'tiny-essentials/libs/sw/service/TinyServiceWorkerEngine';
 import RegisterGlobCachePlugin from 'tiny-essentials/libs/sw/service/plugins/GlobCachePlugin';
 import ViteFileDetectorPlugin from 'tiny-essentials/libs/sw/service/plugins/ViteFileDetector';
-import TinyTabManagerPlugin from 'tiny-essentials/libs/sw/service/plugins/TabManager';
 
 /** @type {ServiceWorkerGlobalScope} */
 // @ts-ignore
@@ -15,7 +14,6 @@ export const tinySw = new TinyServiceWorkerEngine(MY_CONFIG, {
 });
 
 // Install plugins
-tinySw.installPlugin(TinyTabManagerPlugin);
 tinySw.installPlugin(ViteFileDetectorPlugin);
 tinySw.installPlugin(RegisterGlobCachePlugin, {
   patterns: ['**/*.{js,css,html,ico,jpg,png,svg}'],
