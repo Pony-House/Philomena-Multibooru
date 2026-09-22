@@ -4,10 +4,24 @@ import TinyServiceWorker from 'tiny-essentials/libs/router/TinyServiceWorker';
 /** @typedef {import('tiny-essentials/libs/tools/TinyDebugger').DebuggerConstructor} DebuggerConstructor - The constructor function for a debugger instance. */
 
 /**
+ * Options of the new instance.
+ * @typedef {Object} ConstructorOptions - Configuration options.
+ * @property {boolean} [trackFocus=true] - Whether to track tab focus status.
+ * @property {boolean} [allowTabClosing=true] - Whether the tab allows the SW to request tab closure.
+ * @property {Partial<DebuggerConstructor>} [lgConfig] - Debugger configuration.
+ */
+
+/**
+ * @typedef {Object} TabFocusPayload
+ * @property {boolean} isFocused - Whether the tab is currently active and focused.
+ */
+
+/**
  * @typedef {Object} TabInfo
  * @property {string} id - The unique Client ID.
  * @property {string} url - The current URL.
  * @property {string} title - The document title.
+ * @property {boolean} isFocused - Whether the tab currently has window focus.
  */
 
 /**
@@ -20,23 +34,69 @@ import TinyServiceWorker from 'tiny-essentials/libs/router/TinyServiceWorker';
  * Controller to be used in the main thread to communicate with the TabManagerPlugin.
  */
 class TinySwTabsLayer extends TinyPluginLayer {
-  /** @type {TinyServiceWorker} */
+  /** @type {TinyServiceWorker} - The TinyServiceWorker instance used for communication. */
   #sw;
+  /** @type {boolean} - Indicates whether tab focus tracking is enabled. */
+  #trackFocus;
+  /** @type {boolean} - Indicates whether the tab allows closure requests from the SW. */
+  #allowTabClosing;
 
   /**
-   * Initializes event listeners to detect navigation and visibility changes.
+   * Gets the current status of the focus tracking configuration.
+   * @returns {boolean} - Whether the tab focus tracking is enabled.
+   */
+  get trackFocus() {
+    return this.#trackFocus;
+  }
+
+  /**
+   * Gets whether the tab allows closure requests from the Service Worker.
+   * @returns {boolean}
+   */
+  get allowTabClosing() {
+    return this.#allowTabClosing;
+  }
+
+  /**
+   * Determines if the tab is truly active (visible and focused).
+   * @returns {boolean}
+   */
+  #getIsTabActive() {
+    const isHidden =
+      'hidden' in document
+        ? document.hidden
+        : 'mozHidden' in document
+          ? // @ts-ignore
+            document.mozHidden
+          : 'webkitHidden' in document
+            ? // @ts-ignore
+              document.webkitHidden
+            : false;
+
+    return !isHidden && document.hasFocus();
+  }
+
+  /**
+   * Initializes event listeners to detect navigation, visibility, and focus changes.
    */
   #initListeners() {
     // Detect URL/Title changes (Navigation)
     window.addEventListener('popstate', () => this.#reportStatus());
-    window.addEventListener('visibilitychange', () => this.#reportStatus());
 
     // Detect Tab Closing (Most reliable event for closing/navigating away)
     window.addEventListener('pagehide', () => this.#reportStatus(true));
+
+    // Focus and Visibility Tracking
+    if (this.#trackFocus) {
+      const visibilityEvents = ['visibilitychange', 'focus', 'blur', 'pageshow', 'pagehide'];
+      visibilityEvents.forEach((event) => {
+        window.addEventListener(event, () => this.#reportStatus(false));
+      });
+    }
   }
 
   /**
-   * Reports the current status of this tab to the Service Worker.
+   * Reports the current status and permissions of this tab to the Service Worker.
    * @param {boolean} isUnregistering - If true, tells the SW this tab is closing.
    * @returns {Promise<void>}
    */
@@ -49,15 +109,34 @@ class TinySwTabsLayer extends TinyPluginLayer {
     return this.#sw.emitApi('tab:register', {
       url: window.location.href,
       title: document.title,
+      isFocused: this.#trackFocus ? this.#getIsTabActive() : false,
+      permissions: {
+        allowFocusTracking: this.#trackFocus,
+        allowTabClosing: this.#allowTabClosing,
+      },
     });
   }
 
   /**
-   * Initializes a new instance of the TinySwTabsLayer, assigning it a unique key and registering it in the static instances registry.
-   * @param {TinyServiceWorker} sw - The TinyServiceWorker instance.
-   * @param {Partial<DebuggerConstructor>} [lgConfig] - Configuration options for the instance.
+   * Updates the tab's permissions and synchronizes with the Service Worker.
+   * @param {Object} config - The new permission configuration.
+   * @param {boolean} [config.trackFocus] - New focus tracking permission.
+   * @param {boolean} [config.allowTabClosing] - New tab closing permission.
+   * @returns {Promise<void>}
    */
-  constructor(sw, lgConfig = {}) {
+  async setPermissions({ trackFocus, allowTabClosing } = {}) {
+    if (trackFocus !== undefined) this.#trackFocus = trackFocus;
+    if (allowTabClosing !== undefined) this.#allowTabClosing = allowTabClosing;
+    return this.#reportStatus();
+  }
+
+  /**
+   * Initializes a new instance of the TinySwTabsLayer.
+   * @param {TinyServiceWorker} sw - The TinyServiceWorker instance.
+   * @param {ConstructorOptions} [options] - Configuration options.
+   * @throws {TypeError} If the provided sw is not an instance of TinyServiceWorker.
+   */
+  constructor(sw, { lgConfig = {}, trackFocus = true, allowTabClosing = true } = {}) {
     super({
       logCfg: {
         id: '[_blue_TinySW-Tabs_reset_]',
@@ -66,10 +145,29 @@ class TinySwTabsLayer extends TinyPluginLayer {
         useLogColors: lgConfig.useLogColors ?? false,
       },
     });
+
+    if (!(sw instanceof TinyServiceWorker)) {
+      throw new TypeError(
+        '[TinySwTabsLayer] Constructor: sw must be an instance of TinyServiceWorker.',
+      );
+    }
+
     this.#sw = sw;
+    this.#trackFocus = trackFocus;
+    this.#allowTabClosing = allowTabClosing;
+
+    sw.onApi('tab:close', async () => {
+      if (!this.#allowTabClosing) {
+        return { authorized: false };
+      }
+      window.close();
+      return { authorized: true };
+    });
+
     this.#initListeners();
     this.#sw.waitForReady().then(() => this.register());
   }
+
   /**
    * Registers this tab in the manager.
    * @returns {Promise<void>}
@@ -99,6 +197,36 @@ class TinySwTabsLayer extends TinyPluginLayer {
   }
 
   /**
+   * Closes a specific tab by its ID.
+   * @param {string} id - The ID of the tab to close.
+   * @returns {Promise<{ closed: boolean }>}
+   */
+  closeTab(id) {
+    if (typeof id !== 'string')
+      throw new TypeError('[TinySwTabsLayer] closeTab: id must be a string.');
+    return this.#sw.emitApi('tab:close_single', { id });
+  }
+
+  /**
+   * Closes multiple tabs by their IDs.
+   * @param {string[]} ids - Array of tab IDs.
+   * @returns {Promise<{ closed: (-1|0|1)[] }>} (-1: no permission | 0: no closed | 1: closed)
+   */
+  closeTabs(ids) {
+    if (!Array.isArray(ids))
+      throw new TypeError('[TinySwTabsLayer] closeTabs: ids must be an array.');
+    return this.#sw.emitApi('tab:close_multiple', { ids });
+  }
+
+  /**
+   * Closes all registered tabs.
+   * @returns {Promise<void>}
+   */
+  closeAllTabs() {
+    return this.#sw.emitApi('tab:close_all');
+  }
+
+  /**
    * Sets a callback to be executed whenever the tab list changes.
    * @param {(list: TabList) => void} callback
    */
@@ -117,7 +245,7 @@ class TinySwTabsLayer extends TinyPluginLayer {
 
 /**
  * A plugin for TinyServiceWorker that manages a centralized registry of all open website tabs.
- * @type {import('tiny-essentials/libs/router/TinyServiceWorker').SwPluginInstaller<TinySwTabsLayer, 'TabManager', '1.0.0', [Partial<DebuggerConstructor>]|[]>}
+ * @type {import('tiny-essentials/libs/router/TinyServiceWorker').SwPluginInstaller<TinySwTabsLayer, 'TabManager', '1.0.0', [ConstructorOptions]|[]>}
  */
 const TinyTabManagerPlugin = (instance, lgConfig = {}) => {
   const engine = instance.engine;
@@ -128,7 +256,18 @@ const TinyTabManagerPlugin = (instance, lgConfig = {}) => {
   instance.contributors = ['JasminDreasond'];
   instance.categories = ['tab-manager'];
   instance.tags = ['management'];
-  instance.allowedGets = ['onUpdate', 'offUpdate', 'getTabList', 'getTab', 'register'];
+  instance.allowedGets = [
+    'onUpdate',
+    'offUpdate',
+    'getTabList',
+    'getTab',
+    'register',
+    'closeTab',
+    'closeTabs',
+    'closeAllTabs',
+    'trackFocus',
+  ];
+
   if (!(engine instanceof TinyServiceWorker))
     throw new TypeError('Plugin requires a TinyServiceWorker instance to function.');
   return new TinySwTabsLayer(engine, lgConfig);

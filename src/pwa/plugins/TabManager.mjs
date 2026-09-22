@@ -11,6 +11,7 @@ import { sw } from '../config.mjs';
  * @property {string} id - The unique Client ID provided by the browser.
  * @property {string} url - The current URL of the tab.
  * @property {string} title - The document title of the tab.
+ * @property {boolean} isFocused - Whether the tab currently has window focus.
  */
 
 /**
@@ -204,6 +205,13 @@ class TinySwTabsLayer extends TinyPluginLayer {
  */
 const TinyTabManagerPlugin = (instance, lgConfig = {}) => {
   const engine = instance.engine;
+
+  /**
+   * Stores permission settings per client ID.
+   * @type {Map<string, {allowFocusTracking: boolean, allowTabClosing: boolean}>}
+   */
+  const clientPermissions = new Map();
+
   instance.id = 'TabManager';
   instance.version = '1.0.0';
   instance.description = 'Advanced tab manager.';
@@ -273,6 +281,15 @@ const TinyTabManagerPlugin = (instance, lgConfig = {}) => {
           );
         }
 
+        // Store permissions sent by the client
+        clientPermissions.set(
+          clientId,
+          data.permissions ?? {
+            allowFocusTracking: true,
+            allowTabClosing: true,
+          },
+        );
+
         // Perform reconciliation to clean up ghosts before adding new entries
         await reconcileTabs();
 
@@ -280,6 +297,7 @@ const TinyTabManagerPlugin = (instance, lgConfig = {}) => {
           id: clientId,
           url: data.url,
           title: data.title,
+          isFocused: data.isFocused,
         });
 
         await layer.persist(); // Persist to IndexedDB
@@ -287,33 +305,58 @@ const TinyTabManagerPlugin = (instance, lgConfig = {}) => {
       },
     );
 
-    // 2. Handle Tab Update (When URL or Title changes)
-    engine.addMessageListener(
-      'tab:update',
-      /**
-       * Processes update messages to refresh existing tab information.
-       */ async (msg) => {
-        const { data, clientId } = msg;
+    // 2. Single Tab Closing
+    engine.onApi('tab:close_single', async (msg) => {
+      if (!msg.data) return;
+      const { id } = msg.data;
 
-        if (typeof data?.url !== 'string' || typeof data?.title !== 'string') {
-          throw new TypeError(
-            '[TinyTabManagerPlugin] tab:update: data must contain url (string) and title (string).',
-          );
+      // Check if the client has authorized tab closing
+      const permissions = clientPermissions.get(id);
+      if (permissions && !permissions.allowTabClosing) {
+        return { closed: false, reason: 'Permission denied by client.' };
+      }
+
+      const client = await sw.clients.get(id);
+      if (client) {
+        const response = await engine.emitApi(client, 'tab:close');
+        return { closed: !!response?.authorized };
+      }
+      return { closed: false };
+    });
+
+    // 3. Multiple Tab Closing
+    engine.onApi('tab:close_multiple', async (msg) => {
+      if (!msg.data) return;
+      const { ids } = msg.data;
+      const results = [];
+      if (!Array.isArray(ids)) throw new TypeError('ids must be an array');
+      for (const id of ids) {
+        const permissions = clientPermissions.get(id);
+        if (permissions && !permissions.allowTabClosing) {
+          results.push(-1);
+          continue;
         }
 
-        if (tabs.has(clientId)) {
-          tabs.set(clientId, {
-            id: clientId,
-            url: data.url,
-            title: data.title,
-          });
-          await layer.persist(); // Persist to IndexedDB
-          await broadcastUpdate();
+        const client = await sw.clients.get(id);
+        if (client) {
+          const response = await engine.emitApi(client, 'tab:close');
+          results.push(!!response?.authorized ? 1 : 0);
+        } else {
+          results.push(0);
         }
-      },
-    );
+      }
+      return { closed: results };
+    });
 
-    // 3. Handle Tab Unregistration (When a tab is closed)
+    // 4. Close All Tabs
+    engine.onApi('tab:close_all', async () => {
+      const clients = await sw.clients.matchAll();
+      for (const client of clients) {
+        await engine.emitApi(client, 'tab:close');
+      }
+    });
+
+    // 5. Handle Tab Unregistration (When a tab is closed)
     engine.onApi(
       'tab:unregister',
       /**
@@ -332,7 +375,7 @@ const TinyTabManagerPlugin = (instance, lgConfig = {}) => {
       },
     );
 
-    // 4. Handle Request for current list (Manual polling)
+    // 6. Handle Request for current list (Manual polling)
     engine.onApi(
       'tab:get_list',
       /**
@@ -342,14 +385,11 @@ const TinyTabManagerPlugin = (instance, lgConfig = {}) => {
         await reconcileTabs();
 
         // Reply directly to the source of the request
-        return {
-          count: tabs.size,
-          tabs: Array.from(tabs.values()),
-        };
+        return { count: tabs.size, tabs: Array.from(tabs.values()) };
       },
     );
 
-    // 5. Handle Request for a specific tab (New)
+    // 7. Handle Request for a specific tab
     engine.onApi(
       'tab:get_tab',
       /**
