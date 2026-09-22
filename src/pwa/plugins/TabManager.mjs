@@ -159,9 +159,13 @@ class TinySwTabsLayer extends TinyPluginLayer {
    * Retrieves the information for a specific tab by its unique ID.
    * @param {string} id - The unique identifier of the tab.
    * @returns {TabInfo|null} - The tab information if found, or null if the tab does not exist.
+   * @throws {TypeError} If the provided id is not a string.
    * @throws {ReferenceError} If the internal layer instance cannot be found in the registry.
    */
   getTab(id) {
+    if (typeof id !== 'string') {
+      throw new TypeError('[TinySwTabsLayer] getTab: id must be a string.');
+    }
     const instance = TinySwTabsLayer.#instances.get(this.#key);
     if (!instance) {
       throw new ReferenceError('[TinySwTabsLayer] Instance not found for the current key.');
@@ -276,10 +280,26 @@ const TinyTabManagerPlugin = (instance, lgConfig = {}) => {
        */ async (msg) => {
         const { data, clientId } = msg;
 
+        if (typeof clientId !== 'string') {
+          throw new TypeError('[TinyTabManagerPlugin] tab:register: clientId must be a string.');
+        }
+
         if (typeof data?.url !== 'string' || typeof data?.title !== 'string') {
           throw new TypeError(
             '[TinyTabManagerPlugin] tab:register: data must contain url (string) and title (string).',
           );
+        }
+
+        // Deep validation for permissions
+        if (data.permissions !== undefined) {
+          if (
+            typeof data.permissions.allowFocusTracking !== 'boolean' ||
+            typeof data.permissions.allowTabClosing !== 'boolean'
+          ) {
+            throw new TypeError(
+              '[TinyTabManagerPlugin] tab:register: data.permissions must contain allowFocusTracking (boolean) and allowTabClosing (boolean).',
+            );
+          }
         }
 
         // Store permissions sent by the client
@@ -309,7 +329,9 @@ const TinyTabManagerPlugin = (instance, lgConfig = {}) => {
 
     // 2. Single Tab Closing
     engine.onApi('tab:close_single', async (msg) => {
-      if (!msg.data) return;
+      if (!msg.data || typeof msg.data.id !== 'string') {
+        return { closed: false, reason: 'Invalid message data or missing string ID.' };
+      }
       const { id } = msg.data;
 
       // Check if the client has authorized tab closing
@@ -328,11 +350,17 @@ const TinyTabManagerPlugin = (instance, lgConfig = {}) => {
 
     // 3. Multiple Tab Closing
     engine.onApi('tab:close_multiple', async (msg) => {
-      if (!msg.data) return;
+      if (!msg.data || !Array.isArray(msg.data.ids)) {
+        throw new TypeError('[TinyTabManagerPlugin] tab:close_multiple: ids must be an array.');
+      }
       const { ids } = msg.data;
       const results = [];
-      if (!Array.isArray(ids)) throw new TypeError('ids must be an array');
+
       for (const id of ids) {
+        if (typeof id !== 'string') {
+          throw new TypeError('[TinyTabManagerPlugin] tab:close_multiple: invalid ID type in array.');
+        }
+
         const permissions = clientPermissions.get(id);
         if (permissions && !permissions.allowTabClosing) {
           results.push(-1);

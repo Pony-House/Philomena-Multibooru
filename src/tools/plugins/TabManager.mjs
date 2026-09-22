@@ -128,30 +128,44 @@ class TinySwTabsLayer extends TinyPluginLayer {
 
   /**
    * Updates the tab's permissions and synchronizes with the Service Worker.
-   * @param {Object} config - The new permission configuration.
-   * @param {boolean} [config.trackFocus] - New focus tracking permission.
-   * @param {boolean} [config.allowTabClosing] - New tab closing permission.
-   * @returns {Promise<void>}
+   * @param {Object} options - The new permission configuration.
+   * @param {boolean} [options.trackFocus] - New focus tracking permission.
+   * @param {boolean} [options.allowTabClosing] - New tab closing permission.
+   * @returns {Promise<void>} - A promise that resolves when the status report is complete.
+   * @throws {TypeError} If options is not an object or properties are not booleans.
    */
-  async setPermissions({ trackFocus, allowTabClosing } = {}) {
-    if (trackFocus !== undefined) this.#trackFocus = trackFocus;
-    if (allowTabClosing !== undefined) this.#allowTabClosing = allowTabClosing;
+  async setPermissions(options = {}) {
+    if (typeof options !== 'object' || options === null || Array.isArray(options)) {
+      throw new TypeError('[TinySwTabsLayer] setPermissions: options must be an object.');
+    }
+
+    if (options.trackFocus !== undefined && typeof options.trackFocus !== 'boolean') {
+      throw new TypeError('[TinySwTabsLayer] setPermissions: trackFocus must be a boolean.');
+    }
+
+    if (options.allowTabClosing !== undefined && typeof options.allowTabClosing !== 'boolean') {
+      throw new TypeError('[TinySwTabsLayer] setPermissions: allowTabClosing must be a boolean.');
+    }
+
+    if (options.trackFocus !== undefined) this.#trackFocus = options.trackFocus;
+    if (options.allowTabClosing !== undefined) this.#allowTabClosing = options.allowTabClosing;
+
     return this.#reportStatus();
   }
 
   /**
    * Initializes a new instance of the TinySwTabsLayer.
-   * @param {TinyServiceWorker} sw - The TinyServiceWorker instance.
+   * @param {TinyServiceWorker} sw - The TinyServiceWorker instance used for communication.
    * @param {ConstructorOptions} [options] - Configuration options.
-   * @throws {TypeError} If the provided sw is not an instance of TinyServiceWorker.
+   * @throws {TypeError} If sw is not an instance of TinyServiceWorker or options are invalid.
    */
-  constructor(sw, { lgConfig = {}, trackFocus = true, allowTabClosing = true, getExtraData } = {}) {
+  constructor(sw, options = {}) {
     super({
       logCfg: {
         id: '[_blue_TinySW-Tabs_reset_]',
-        logger: lgConfig.logger ?? console,
-        debugMode: lgConfig.debugMode ?? false,
-        useLogColors: lgConfig.useLogColors ?? false,
+        logger: options.lgConfig?.logger ?? console,
+        debugMode: options.lgConfig?.debugMode ?? false,
+        useLogColors: options.lgConfig?.useLogColors ?? false,
       },
     });
 
@@ -161,10 +175,24 @@ class TinySwTabsLayer extends TinyPluginLayer {
       );
     }
 
+    // Deep validation of ConstructorOptions
+    if (typeof options !== 'object' || options === null || Array.isArray(options)) {
+      throw new TypeError('[TinySwTabsLayer] Constructor: options must be an object.');
+    }
+    if (options.trackFocus !== undefined && typeof options.trackFocus !== 'boolean') {
+      throw new TypeError('[TinySwTabsLayer] Constructor: trackFocus must be a boolean.');
+    }
+    if (options.allowTabClosing !== undefined && typeof options.allowTabClosing !== 'boolean') {
+      throw new TypeError('[TinySwTabsLayer] Constructor: allowTabClosing must be a boolean.');
+    }
+    if (options.getExtraData !== undefined && typeof options.getExtraData !== 'function') {
+      throw new TypeError('[TinySwTabsLayer] Constructor: getExtraData must be a function.');
+    }
+
     this.#sw = sw;
-    this.#trackFocus = trackFocus;
-    this.#allowTabClosing = allowTabClosing;
-    this.#extraDataFn = getExtraData ?? null;
+    this.#trackFocus = options.trackFocus ?? true;
+    this.#allowTabClosing = options.allowTabClosing ?? true;
+    this.#extraDataFn = options.getExtraData ?? null;
 
     sw.onApi('tab:close', async () => {
       if (!this.#allowTabClosing) {
