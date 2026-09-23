@@ -1,8 +1,8 @@
 import { defineConfig } from 'vite';
 import { nodePolyfills } from 'vite-plugin-node-polyfills';
 import react from '@vitejs/plugin-react';
-import tinyVitePwaPlugin from 'tiny-essentials/webTemplates/vite/7.3/plugins/tinyVitePwaPlugin';
-import { copyIndexToGithub404 } from 'tiny-essentials/webTemplates/vite/7.3/plugins/githubUtils';
+import TinyVitePwaPlugin from 'tiny-essentials/webTemplates/vite/7.3/plugins/TinyVitePwaPlugin';
+import { CopyIndexToGithub404 } from 'tiny-essentials/webTemplates/vite/7.3/plugins/githubUtils';
 
 const manifest = {
   id: 'philomena_multibooru',
@@ -37,9 +37,9 @@ export default defineConfig({
   },
   plugins: [
     react(),
-    copyIndexToGithub404(),
+    CopyIndexToGithub404(),
     nodePolyfills({ include: ['events'] }),
-    tinyVitePwaPlugin({
+    TinyVitePwaPlugin({
       injectManifestToGlobal: false,
       injectRegister: false,
       manifest: manifest,

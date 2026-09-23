@@ -1,6 +1,7 @@
 import TinyServiceWorkerEngine from 'tiny-essentials/libs/sw/service/TinyServiceWorkerEngine';
 import RegisterGlobCachePlugin from 'tiny-essentials/libs/sw/service/plugins/GlobCachePlugin';
 import ViteFileDetectorPlugin from 'tiny-essentials/libs/sw/service/plugins/ViteFileDetector';
+import GlobBypassPlugin from 'tiny-essentials/libs/sw/service/plugins/GlobBypassPlugin';
 
 /** @type {ServiceWorkerGlobalScope} */
 // @ts-ignore
@@ -13,12 +14,19 @@ export const tinySw = new TinyServiceWorkerEngine(MY_CONFIG, {
   useLogColors: true,
 });
 
+// Worker files
+const workerFiles = ['**/sw.js', '**/worker.js', '**/sw.js?*', '**/worker.js?*'];
+
 // Install plugins
 tinySw.installPlugin(ViteFileDetectorPlugin);
 tinySw.installPlugin(RegisterGlobCachePlugin, {
   patterns: ['**/*.{js,css,html,ico,jpg,png,svg}'],
-  exclude: ['**/sw.js', '**/node_modules/**'],
+  exclude: [...workerFiles, '**/node_modules/**'],
   cacheName: 'static-assets-v1',
+});
+
+tinySw.installPlugin(GlobBypassPlugin, {
+  patterns: workerFiles
 });
 
 [
