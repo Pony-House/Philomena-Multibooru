@@ -1,5 +1,6 @@
 import { useRef, useState } from 'react';
 import { alert } from 'tiny-essentials/webTemplates/bootstrap/5.3/html/BootstrapDialogs';
+import { logger } from '../../Console.mjs';
 
 /**
  * @param {Object} config
@@ -226,7 +227,7 @@ export const ThemeSettings = ({ isDark }) => {
           alert('No valid colors found in the file.');
         }
       } catch (err) {
-        console.error(err);
+        logger.error(err);
         alert('Invalid JSON file format.');
       }
     };

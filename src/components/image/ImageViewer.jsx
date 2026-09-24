@@ -10,6 +10,7 @@ import {
 
 import { alert } from 'tiny-essentials/webTemplates/bootstrap/5.3/html/BootstrapDialogs';
 
+import { logger } from '../../Console.mjs';
 import { fetchComments, searchImages, syncUserGalleryPages } from '../../services/api/Images.js';
 import { getAccountBooruApi } from '../../services/api/System.js';
 import { checkLocalFave, toggleLocalFave, updateLocalFave } from '../../services/api/LocalFaves.js';
@@ -399,7 +400,7 @@ export const ImageViewer = ({
         if (isMounted) setComments(data.comments || []);
       } catch (err) {
         if (err.name !== 'AbortError') {
-          console.error('Failed to fetch comments:', err);
+          logger.error('Failed to fetch comments:', err);
         }
       } finally {
         if (isMounted) setIsLoadingComments(false);
@@ -558,7 +559,7 @@ export const ImageViewer = ({
         }
       } catch (err) {
         if (err.name !== 'AbortError') {
-          console.error('Failed to fetch recommendations:', err);
+          logger.error('Failed to fetch recommendations:', err);
           if (isMounted) setHasMoreRecs(false); // Stop trying if the API fails
         }
       } finally {
@@ -589,7 +590,7 @@ export const ImageViewer = ({
 
           // Anti-Spam Protection: If this trigger happens less than 2000ms after the last fetch started, lock it.
           if ((lastFetchTime.current ?? 0) > 0 && now - (lastFetchTime.current ?? 0) < 2000) {
-            console.warn(
+            logger.warn(
               '⚠️ Security Lock: API request spam detected in recommendations. Infinite scroll paused.',
             );
             setIsRateLimited(true);

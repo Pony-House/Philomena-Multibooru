@@ -1,4 +1,4 @@
-import { sw, tinySw } from './config.mjs';
+import { logger, sw, tinySw } from './config.mjs';
 
 /** @type {Map<string, string>} */
 const activeScanners = new Map();
@@ -16,7 +16,7 @@ const cleanGhostScanners = async () => {
   for (const id of activeScanners.keys()) {
     if (!activeClientIds.includes(id)) {
       activeScanners.delete(id);
-      console.log(`[ServiceWorker] Removed ghost scanner: ${id}`);
+      logger.log(`Removed ghost scanner: ${id}`);
     }
   }
 };

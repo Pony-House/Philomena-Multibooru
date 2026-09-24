@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { logger } from '../../Console.mjs';
 import { searchImagesApi } from '../../services/api/Images.js';
 import { geString, parseQueryResults } from '../../queries/globalTags.js';
 import { swManager } from '../../sw/browser/sw.mjs';
@@ -165,9 +166,9 @@ export const NotificationsMode = ({ accounts, visibleBoorus, onClose, onGoHome }
       try {
         /** @type {HTMLAudioElement} */
         const audio = new Audio('/sounds/notification.mp3');
-        audio.play().catch((err) => console.warn('Audio playback prevented by browser:', err));
+        audio.play().catch((err) => logger.warn('Audio playback prevented by browser:', err));
       } catch (err) {
-        console.error('Failed to play notification sound:', err);
+        logger.error('Failed to play notification sound:', err);
       }
     }
 
@@ -252,7 +253,7 @@ export const NotificationsMode = ({ accounts, visibleBoorus, onClose, onGoHome }
             (lastSeenIds.current ?? [])[trackerKey] = latestImage.id;
           }
         } catch (error) {
-          console.error(`Failed to check notifications for ${acc.booruUrl}:`, error);
+          logger.error(`Failed to check notifications for ${acc.booruUrl}:`, error);
         }
       }
 

@@ -14,6 +14,8 @@ export const tinySw = new TinyServiceWorkerEngine(MY_CONFIG, {
   useLogColors: true,
 });
 
+export const logger = tinySw.toConsole();
+
 // Worker files
 const workerFiles = ['**/sw.js', '**/worker.js', '**/sw.js?*', '**/worker.js?*'];
 

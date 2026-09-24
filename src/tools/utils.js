@@ -1,6 +1,7 @@
 import TinyPromiseQueue from 'tiny-essentials/libs/utils/TinyPromiseQueue';
 import { alert } from 'tiny-essentials/webTemplates/bootstrap/5.3/html/BootstrapDialogs';
 
+import { logger } from '../Console.mjs';
 import { fetchProfile } from '../services/api/Profile.js';
 import { fetchSingleImage } from '../services/api/Images.js';
 import { getAccountBooruApi } from '../services/api/System.js';
@@ -44,7 +45,7 @@ export const openImageLink = async (booruUrl, onOpenImageLink, setIsLoading, ref
     }
   } catch (err) {
     setIsLoading(false);
-    console.error('Error fetching image link:', err);
+    logger.error('Error fetching image link:', err);
     alert('Error fetching image data.');
   }
 };
@@ -75,7 +76,7 @@ export const openProfileLink = async (booruUrl, onOpenProfileLink, setIsLoading,
     }
   } catch (err) {
     setIsLoading(false);
-    console.error('Error fetching profile link:', err);
+    logger.error('Error fetching profile link:', err);
     alert('Error fetching profile data.');
   }
 };
@@ -94,7 +95,7 @@ const setMetaTag = (property, content) => {
   if (element) {
     element.setAttribute('content', content);
   } else {
-    console.warn(`Meta tag with property/name "${property}" was not found in the document.`);
+    logger.warn(`Meta tag with property/name "${property}" was not found in the document.`);
   }
 };
 

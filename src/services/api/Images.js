@@ -1,4 +1,5 @@
 import TinySimpleDice from 'tiny-essentials/libs/math/TinySimpleDice';
+import { logger } from '../../Console.mjs';
 import { dbConnection } from '../../db/connection.js';
 import { getBooruFilterId } from './Filters.js';
 import { fetchPhilomena, throwApiError } from './Philomena.js';
@@ -502,10 +503,10 @@ const syncGalleryPage = async (
 
     await enforceStorageLimit();
 
-    console.log(`Synced page ${page} from ${booruUrl} (${time})`);
+    logger.log(`Synced page ${page} from ${booruUrl} (${time})`);
     return data;
   } catch (error) {
-    console.error('Failed to sync gallery page:', error);
+    logger.error('Failed to sync gallery page:', error);
   }
 };
 
@@ -787,7 +788,7 @@ export const fetchSingleImage = async (booruUrl, apiKey, imageId) => {
     // Restores boolean fields for the React components
     return fixImageObj(imageResult);
   } catch (error) {
-    console.error(`Failed to fetch single image ${imageId} from ${booruUrl}:`, error);
+    logger.error(`Failed to fetch single image ${imageId} from ${booruUrl}:`, error);
     return null;
   }
 };
@@ -825,7 +826,7 @@ export const getFeaturedImage = async (booruUrl, apiKey) => {
 
     return imageResult;
   } catch (error) {
-    console.error('Failed to fetch featured image:', error);
+    logger.error('Failed to fetch featured image:', error);
     return null;
   }
 };
@@ -888,7 +889,7 @@ export const randomImage = async (accounts, query = '*') => {
         validBoorus.push({ account, total: apiTotal });
       }
     } catch (error) {
-      console.error(
+      logger.error(
         `Failed to fetch and cache total for randomImage on ${account.booruUrl}:`,
         error,
       );
@@ -941,7 +942,7 @@ export const randomImage = async (accounts, query = '*') => {
       return fixImageObj(imageResult);
     }
   } catch (error) {
-    console.error('Failed to fetch the mathematically calculated random image:', error);
+    logger.error('Failed to fetch the mathematically calculated random image:', error);
   }
 
   return null;
@@ -961,8 +962,8 @@ export const clearImageCache = async () => {
     // Note: You might want to clear 'Interactions' as well
     // if they are strictly tied to the cached images.
 
-    console.log('Image and Query cache cleared successfully.');
+    logger.log('Image and Query cache cleared successfully.');
   } catch (error) {
-    console.error('Failed to clear image cache:', error);
+    logger.error('Failed to clear image cache:', error);
   }
 };

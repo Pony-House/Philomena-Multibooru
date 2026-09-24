@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { alert, confirm } from 'tiny-essentials/webTemplates/bootstrap/5.3/html/BootstrapDialogs';
 
+import { logger } from '../../Console.mjs';
 import { getActiveAccounts, updateSystemSettings } from '../../services/api/System.js';
 import {
   exportLocalFaves,
@@ -171,7 +172,7 @@ export const AppSettings = ({
       link.click();
       URL.revokeObjectURL(url);
     } catch (err) {
-      console.error(err);
+      logger.error(err);
       alert('An error occurred while exporting Local Favorites.');
     } finally {
       setIsProcessingFaves(false);
@@ -204,7 +205,7 @@ export const AppSettings = ({
         // Reload the page to update the application status.
         location.reload();
       } catch (err) {
-        console.error(err);
+        logger.error(err);
         alert('Invalid JSON file format or error during import.');
       } finally {
         setIsProcessingFaves(false);
@@ -234,7 +235,7 @@ export const AppSettings = ({
         // Reload the page to clear the UI.
         location.reload();
       } catch (err) {
-        console.error(err);
+        logger.error(err);
         alert('Failed to reset Local Favorites.');
       } finally {
         setIsProcessingFaves(false);

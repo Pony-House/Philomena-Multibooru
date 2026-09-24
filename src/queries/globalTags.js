@@ -1,3 +1,5 @@
+import { logger } from '../Console.mjs';
+
 /**
  * Always use geString when comparing a query against '*'.
  * Additionally, ensure parseQueryResults is used whenever executing a query within a script.
@@ -19,7 +21,7 @@ if (localStorage.getItem('app_recVideoMode') === 'true') {
 const geString = globalExpression.join(', ');
 
 // Welcome warning
-console.log(`Your global query is "${geString}".`);
+logger.log(`Your global query is "${geString}".`);
 
 /**
  * @param {string} query

@@ -6,6 +6,7 @@ import TinyRouter from 'tiny-essentials/libs/router/TinyRouter';
 import TinyMapCache from 'tiny-essentials/libs/router/TinyMapCache';
 import { waitForTrue } from 'tiny-essentials/basics/promiseUtils';
 
+import { logger } from './Console.mjs';
 import { getDbConnStatus, initDatabase } from './db/connection.js';
 import { applyThemeFromStorage } from './services/theme.js';
 
@@ -326,7 +327,7 @@ const App = () => {
       // 1. Attempt to retrieve from cache first
       const cachedImg = imageCache.get(cacheKey);
       if (cachedImg) {
-        console.log(`[Cache] [${host}] Image ${id} retrieved from cache.`);
+        logger.log(`[Cache] [${host}] Image ${id} retrieved from cache.`);
         disableOldPage();
         startPage(cachedImg);
         return; // Stop here to avoid unnecessary fetch
@@ -365,7 +366,7 @@ const App = () => {
       // 1. Attempt to retrieve from cache
       const cachedProfile = profileCache.get(cacheKey);
       if (cachedProfile) {
-        console.log(`[Cache] [${host}] Profile ${id} retrieved from cache.`);
+        logger.log(`[Cache] [${host}] Profile ${id} retrieved from cache.`);
         disableOldPage();
         setIs404(false);
         setViewingImage(null);
@@ -443,7 +444,7 @@ const App = () => {
         setWatchedImages([]);
         setTotalPages(Math.max(1, Math.ceil(localResults.total / limitToUse)));
       } catch (e) {
-        console.error('Error loading local data:', e);
+        logger.error('Error loading local data:', e);
       }
       return;
     }
@@ -558,7 +559,7 @@ const App = () => {
         searchMode,
       );
     } catch (err) {
-      console.error('Error on background sync:', err);
+      logger.error('Error on background sync:', err);
     }
   };
 
@@ -679,7 +680,7 @@ const App = () => {
 
       setCurrentPage(nextPage);
     } catch (err) {
-      console.error('Error fetching next page via Infinite Scroll:', err);
+      logger.error('Error fetching next page via Infinite Scroll:', err);
     } finally {
       setIsFetchingMore(false);
     }
@@ -1016,7 +1017,7 @@ const App = () => {
         ) {
           const now = Date.now();
           if (lastGalleryFetchTime.current > 0 && now - lastGalleryFetchTime.current < 2000) {
-            console.warn(
+            logger.warn(
               '⚠️ Security Lock: API request spam detected in gallery. Infinite scroll paused.',
             );
             setGalleryRateLimited(true);
@@ -1117,7 +1118,7 @@ const App = () => {
           return;
         }
       } catch (e) {
-        console.error(e);
+        logger.error(e);
         return;
       }
     }
@@ -1178,7 +1179,7 @@ const App = () => {
             handleOpenImage(newImages[0]);
           }
         } catch (e) {
-          console.error(e);
+          logger.error(e);
         }
       } else {
         alert('There are no more images to display in this direction.');
@@ -1239,7 +1240,7 @@ const App = () => {
             handleOpenImage(newImages[newImages.length - 1]);
           }
         } catch (e) {
-          console.error(e);
+          logger.error(e);
         }
       } else {
         alert('There are no more images to display in this direction.');
@@ -1360,7 +1361,7 @@ const App = () => {
         }
       }
     } catch (error) {
-      console.error('Error fetching random image:', error);
+      logger.error('Error fetching random image:', error);
     } finally {
       setIsRandomizing(false);
     }

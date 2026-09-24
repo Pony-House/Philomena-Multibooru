@@ -1,3 +1,4 @@
+import { logger } from '../../Console.mjs';
 import { fetchPhilomena, throwApiError } from './Philomena.js';
 
 /**
@@ -112,7 +113,7 @@ export const fetchProfile = async (booruUrl, userId) => {
       awards: user.awards,
     };
   } catch (error) {
-    console.error('Failed to fetch profile:', error);
+    logger.error('Failed to fetch profile:', error);
     return null;
   }
 };

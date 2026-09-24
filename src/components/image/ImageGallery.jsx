@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 
+import { logger } from '../../Console.mjs';
 import { checkLocalFave, toggleLocalFave } from '../../services/api/LocalFaves.js';
 
 /**
@@ -206,7 +207,7 @@ const ContextMenu = ({ x, y, img, onClose, onOpenImage, hostname }) => {
         lastAction = { ...parsed, group: targetGroup };
       }
     } catch (e) {
-      console.error(e);
+      logger.error(e);
       // Storage parsing failed, safely ignore
     }
   }

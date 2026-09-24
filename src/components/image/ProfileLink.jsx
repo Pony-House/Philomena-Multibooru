@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { logger } from '../../Console.mjs';
 
 /** @typedef {import('react').MouseEvent} MouseEvent */
 /** @typedef {import('react').MouseEventHandler} MouseEventHandler */
@@ -156,7 +157,7 @@ const ProfileContextMenu = ({ x, y, booruUrl, username, userId, onClose, openPro
         lastAction = { ...parsed, group: targetGroup };
       }
     } catch (e) {
-      console.error(e);
+      logger.error(e);
       // Safely ignore parsing issues
     }
   }

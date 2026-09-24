@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 
+import { logger } from '../../Console.mjs';
 import { fetchProfile } from '../../services/api/Profile.js';
 import { fetchComments, searchImages, syncUserGalleryPages } from '../../services/api/Images.js';
 import { getAccountBooru } from '../../services/api/System.js';
@@ -135,7 +136,7 @@ export const UserProfile = ({
           }
         }
       } catch (err) {
-        console.error('Error loading profile data:', err);
+        logger.error('Error loading profile data:', err);
       } finally {
         if (loadCache.isMounted) setIsLoading(false);
       }

@@ -1,3 +1,4 @@
+import { logger } from '../../Console.mjs';
 import { clearImageCache } from './Images.js';
 import { fetchPhilomena, throwApiError } from './Philomena.js';
 
@@ -132,7 +133,7 @@ export const getBooruFilterId = async (booruUrl) => {
       return defaultFilterId;
     }
   } catch (error) {
-    console.error(`Failed to fetch default filter for ${booruUrl}:`, error);
+    logger.error(`Failed to fetch default filter for ${booruUrl}:`, error);
   }
 
   return null;

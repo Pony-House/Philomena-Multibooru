@@ -1,3 +1,4 @@
+import { logger } from '../../Console.mjs';
 import { dbConnection } from '../../db/connection.js';
 
 /**
@@ -126,9 +127,9 @@ export const clearSpecificBooruCache = async (booruUrls) => {
     await dbConnection.remove({ from: 'Images', where: whereClause });
     await dbConnection.remove({ from: 'TotalImagesCounter', where: whereClause });
 
-    console.log(`Cache cleared for: ${normalizedUrls.join(', ')}`);
+    logger.log(`Cache cleared for: ${normalizedUrls.join(', ')}`);
   } catch (error) {
-    console.error('Failed to clear specific booru cache:', error);
+    logger.error('Failed to clear specific booru cache:', error);
   }
 };
 

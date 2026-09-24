@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { alert } from 'tiny-essentials/webTemplates/bootstrap/5.3/html/BootstrapDialogs';
+import { logger } from '../../Console.mjs';
 import { fixBooruUrl } from '../../services/api/utils.js';
 import {
   fetchSystemFilters,
@@ -84,7 +85,7 @@ export const Filters = ({ loadAccounts, accounts, activeTab }) => {
           setSystemFilters(sysRes.filters || []);
           setUserFilters(userRes.filters || []);
         } catch (err) {
-          console.error('Failed to load filters', err);
+          logger.error('Failed to load filters', err);
         } finally {
           setIsLoadingFilters(false);
         }
@@ -114,7 +115,7 @@ export const Filters = ({ loadAccounts, accounts, activeTab }) => {
       setSavedFilters(pendingFilters);
       await alert('Filters saved successfully! Image cache has been cleared to apply new filters.');
     } catch (err) {
-      console.error('Failed to save filters', err);
+      logger.error('Failed to save filters', err);
       await alert('Error saving filters.');
     }
   };
