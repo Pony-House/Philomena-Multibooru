@@ -3,7 +3,7 @@ import TinySimpleDice from 'tiny-essentials/libs/math/TinySimpleDice';
 import { shuffleArray } from 'tiny-essentials/basics/array';
 import { alert } from 'tiny-essentials/webTemplates/bootstrap/5.3/html/BootstrapDialogs';
 import TinyRouter from 'tiny-essentials/libs/router/TinyRouter';
-import TinyMapCache from 'tiny-essentials/libs/router/TinyMapCache';
+import TinyMapCache from 'tiny-essentials/libs/storage/TinyMapCache';
 import { waitForTrue } from 'tiny-essentials/basics/promiseUtils';
 
 import { logger } from './Console.mjs';

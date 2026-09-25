@@ -1,6 +1,7 @@
 import { useEffect } from 'react';
 import TinyDomReadyManager from 'tiny-essentials/libs/html/TinyDomReadyManager';
 import { waitForTrue } from 'tiny-essentials/basics/promiseUtils';
+import { logger } from '../../Console.mjs';
 import { getDbConnStatus } from '../../db/connection.js';
 import { importantTasks } from '../../tools/utils.js';
 import { swManager } from '../../sw/browser/sw.mjs';
@@ -14,7 +15,7 @@ readyPage.onReady(
         swManager.register({ type: import.meta.env.DEV ? 'module' : 'classic' }),
       );
     } catch (err) {
-      console.error('Initialization failed', err);
+      logger.error('Initialization failed', err);
     }
   },
   { once: true },

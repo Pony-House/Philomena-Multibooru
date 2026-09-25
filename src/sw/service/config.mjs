@@ -28,7 +28,7 @@ tinySw.installPlugin(RegisterGlobCachePlugin, {
 });
 
 tinySw.installPlugin(GlobBypassPlugin, {
-  patterns: workerFiles
+  patterns: workerFiles,
 });
 
 [
