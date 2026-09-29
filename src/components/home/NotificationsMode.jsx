@@ -120,7 +120,7 @@ export const NotificationsMode = ({ accounts, visibleBoorus, onClose, onGoHome }
   useEffect(() => {
     return () => {
       if (isActive) {
-        swManager.emit('STOP_SCANNER');
+        swManager.emitMessage('STOP_SCANNER');
       }
     };
   }, [isActive]);
@@ -140,14 +140,14 @@ export const NotificationsMode = ({ accounts, visibleBoorus, onClose, onGoHome }
       if (swManager.isSwAvailable) {
         /** @type {string} */
         const queryKey = searchType === 'custom' ? `custom|${customQuery}` : searchType;
-        swManager.emit('REQUEST_START_SCANNER', { queryKey });
+        swManager.emitMessage('REQUEST_START_SCANNER', { queryKey });
       } else {
         setIsActive(true);
         setIsWaitingSw(false);
       }
     } else {
       if (swManager.isSwAvailable) {
-        swManager.emit('STOP_SCANNER');
+        swManager.emitMessage('STOP_SCANNER');
       } else {
         setIsActive(false);
         setIsWaitingSw(false);
@@ -247,7 +247,7 @@ export const NotificationsMode = ({ accounts, visibleBoorus, onClose, onGoHome }
               sendNotification(acc.booruUrl, title, body);
 
               // Tell the Service Worker to broadcast the alert icon to all tabs
-              swManager.emit('FAVICON_UPDATE', { icon: 'alert' });
+              swManager.emitMessage('FAVICON_UPDATE', { icon: 'alert' });
             }
 
             (lastSeenIds.current ?? [])[trackerKey] = latestImage.id;

@@ -53,7 +53,7 @@ const ServiceWorkerSync = () => {
      * @returns {void}
      */
     const handleVisibilityAndFocus = () => {
-      if (!document.hidden) swManager.emit('FAVICON_UPDATE', { icon: 'default' });
+      if (!document.hidden) swManager.emitMessage('FAVICON_UPDATE', { icon: 'default' });
     };
 
     swManager.on('FAVICON_UPDATE', onIconUpdate);
