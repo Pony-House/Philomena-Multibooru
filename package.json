@@ -8,7 +8,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "fix:prettier": "prettier --write ./src/* && prettier --write ./vite.config.js && prettier --write ./index.html",
+    "prettier": "prettier --write ./src/* && prettier --write ./vite.config.js && prettier --write ./index.html",
     "preview": "vite preview"
   },
   "dependencies": {
@@ -20,7 +20,7 @@
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "react-markdown": "^10.1.0",
-    "tiny-essentials": "^1.28.19"
+    "tiny-essentials": "^1.29.0"
   },
   "devDependencies": {
     "@types/node": "26.5.0",
