@@ -9,4 +9,14 @@ export const swManager = new TinyServiceWorker({
   useLogColors: true,
 });
 
+const console = swManager.toConsole();
+
+swManager.pushEvents.on('push', ({ data, notificationShown, showNotification }) => {
+  console.log(`push event received (notificationShown=${notificationShown})`, data);
+  if (!notificationShown) {
+    console.log('page is responsible for the notification');
+    showNotification();
+  }
+});
+
 if (import.meta.env.DEV) window.swManager = swManager;
