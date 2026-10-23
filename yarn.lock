@@ -2696,10 +2696,10 @@ timers-browserify@^2.0.4:
   dependencies:
     setimmediate "^1.0.4"
 
-tiny-essentials@^1.29.0:
-  version "1.29.0"
-  resolved "https://registry.yarnpkg.com/tiny-essentials/-/tiny-essentials-1.29.0.tgz#f96528ec69e0e92f8fbb1dca2da081fe1fc75475"
-  integrity sha512-yXBRBh1PtM2VpQmGsRy8DBxKJIkF1pE64c2HyoTENU2S0SvAGxy03nKwNSwDXC4AwlFXiqncTr6NaS9OPJslzg==
+tiny-essentials@^1.29.1:
+  version "1.29.1"
+  resolved "https://registry.yarnpkg.com/tiny-essentials/-/tiny-essentials-1.29.1.tgz#b81462fd2af707657921cc57bf9cec9d39b29b8f"
+  integrity sha512-XLfP7AHYoHfRPe3YF9OA0Mckaano+Xad5Mxzwyz82r37ZkS5MfGsMODGE7WMxGqP8O1pSbqAIoGVmIcVGL73TQ==
 
 tinyglobby@^0.2.15:
   version "0.2.17"
